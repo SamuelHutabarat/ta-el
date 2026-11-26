@@ -28,11 +28,21 @@ class OwnerController extends Controller
             ->count();
 
         // 2. Sales last 7 days (for chart)
+        $latestTrxDate = Transaksi::max('created_at');
+        $hasRecentTrx = Transaksi::where('created_at', '>=', Carbon::now()->subDays(6)->startOfDay())->exists();
+
+        // If today or last 7 days has activity, anchor to now.
+        // Otherwise, if database has older transactions (e.g. from previous demo/seed date), anchor to latest transaction date
+        // so the chart always displays real data and never flat zeros!
+        $anchor = ($hasRecentTrx || !$latestTrxDate) ? Carbon::now() : Carbon::parse($latestTrxDate);
+        $chartStartDate = $anchor->copy()->subDays(6)->startOfDay();
+        $chartEndDate = $anchor->copy()->endOfDay();
+
         $salesChartData = Transaksi::select(
             DB::raw('DATE(created_at) as date'),
             DB::raw('SUM(total_akhir) as total')
         )
-        ->where('created_at', '>=', Carbon::now()->subDays(6))
+        ->whereBetween('created_at', [$chartStartDate, $chartEndDate])
         ->groupBy('date')
         ->orderBy('date', 'asc')
         ->get();
@@ -41,13 +51,16 @@ class OwnerController extends Controller
         $chartLabels = [];
         $chartValues = [];
         for ($i = 6; $i >= 0; $i--) {
-            $day = Carbon::now()->subDays($i)->format('Y-m-d');
-            $formattedDay = Carbon::now()->subDays($i)->isoFormat('D MMM');
+            $dayObj = $anchor->copy()->subDays($i);
+            $day = $dayObj->format('Y-m-d');
+            $formattedDay = $dayObj->isoFormat('D MMM');
             $chartLabels[] = $formattedDay;
             
             $found = $salesChartData->firstWhere('date', $day);
             $chartValues[] = $found ? (float)$found->total : 0;
         }
+
+        $chartPeriod = $anchor->copy()->subDays(6)->isoFormat('D MMM Y') . ' - ' . $anchor->isoFormat('D MMM Y');
 
         // 3. Loyalty Member Distribution (Bronze, Silver, Gold)
         $memberLevels = Pelanggan::select('status_member', DB::raw('count(*) as count'))
@@ -85,6 +98,7 @@ class OwnerController extends Controller
             'activePromos',
             'chartLabels',
             'chartValues',
+            'chartPeriod',
             'levelLabels',
             'levelCounts',
             'bestSellers',
@@ -235,7 +249,7 @@ class OwnerController extends Controller
     }
 
     /**
-     * Export sales report to Excel.
+     * Export sales report to Excel/CSV.
      */
     public function exportExcel(Request $request)
     {
@@ -247,30 +261,51 @@ class OwnerController extends Controller
             ->orderBy('created_at', 'desc')
             ->get();
 
-        $fileName = "laporan-penjualan-kopi-tkp-" . $startDate . "-to-" . $endDate . ".xls";
+        $fileName = "laporan-penjualan-kopi-tkp-" . $startDate . "-to-" . $endDate . ".csv";
 
-        header("Content-Type: application/vnd.ms-excel");
-        header("Content-Disposition: attachment; filename=\"$fileName\"");
-        header("Pragma: no-cache");
-        header("Expires: 0");
+        return response()->streamDownload(function () use ($transaksi, $startDate, $endDate) {
+            $output = fopen('php://output', 'w');
 
-        echo "Laporan Penjualan Kopi Tempat Kamu Pulang (TKP)\n";
-        echo "Periode: " . $startDate . " s/d " . $endDate . "\n\n";
+            // UTF-8 BOM for Microsoft Excel compatibility
+            fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-        echo "Kode Transaksi\tTanggal\tPelanggan\tKasir/Barista\tTotal Harga\tDiskon\tTotal Akhir\tMetode Pembayaran\n";
+            // Header information
+            fputcsv($output, ['Laporan Penjualan Kopi Tempat Kamu Pulang (TKP)']);
+            fputcsv($output, ['Periode:', $startDate . ' s/d ' . $endDate]);
+            fputcsv($output, []); // Empty row
 
-        foreach ($transaksi as $t) {
-            $pelangganNama = $t->pelanggan ? $t->pelanggan->nama : 'Guest';
-            $baristaNama = $t->user ? $t->user->name : 'System';
-            
-            // Format numbers
-            $totalHarga = number_format($t->total_harga, 0, ',', '');
-            $diskon = number_format($t->diskon, 0, ',', '');
-            $totalAkhir = number_format($t->total_akhir, 0, ',', '');
+            // Table headers
+            fputcsv($output, [
+                'Kode Transaksi',
+                'Tanggal & Waktu',
+                'Pelanggan',
+                'Kasir / Barista',
+                'Total Harga (Rp)',
+                'Diskon (Rp)',
+                'Total Akhir (Rp)',
+                'Metode Pembayaran',
+                'Status'
+            ]);
 
-            echo "{$t->kode_transaksi}\t{$t->created_at}\t{$pelangganNama}\t{$baristaNama}\t{$totalHarga}\t{$diskon}\t{$totalAkhir}\t{$t->metode_pembayaran}\n";
-        }
-        exit;
+            foreach ($transaksi as $t) {
+                fputcsv($output, [
+                    $t->kode_transaksi,
+                    $t->created_at->format('Y-m-d H:i:s'),
+                    $t->pelanggan ? $t->pelanggan->nama : 'Guest Walk-in',
+                    $t->user ? $t->user->name : 'System',
+                    $t->total_harga,
+                    $t->diskon,
+                    $t->total_akhir,
+                    $t->metode_pembayaran,
+                    $t->status_pembayaran
+                ]);
+            }
+
+            fclose($output);
+        }, $fileName, [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $fileName . '"',
+        ]);
     }
 
     /**

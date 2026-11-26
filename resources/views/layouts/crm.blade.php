@@ -18,24 +18,27 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     
-    <!-- DataTables CSS -->
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
-    
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chart.js (Local offline first, CDN fallback) -->
+    <script src="{{ asset('js/chart.min.js') }}"></script>
+    <script>
+        if (typeof Chart === 'undefined') {
+            document.write('<script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>');
+        }
+    </script>
 
     <!-- Custom CSS Design System -->
     <style>
         :root {
-            --primary-coffee: #2C1B18;
-            --primary-coffee-light: #4A2E2B;
-            --accent-gold: #C8963E;
-            --accent-gold-hover: #E5B25D;
-            --bg-dark-espresso: #140C0B;
-            --card-coffee-dark: #1F1412;
-            --cream-soft: #F9F3EB;
-            --text-muted-coffee: #A58E8A;
-            --text-light: #F4EBE8;
+            --primary-coffee: #3A2420;
+            --primary-coffee-light: #563732;
+            --accent-gold: #D4A047;
+            --accent-gold-hover: #EAB965;
+            --bg-dark-espresso: #221614;
+            --card-coffee-dark: #2D1E1B;
+            --card-coffee-hover: #382522;
+            --cream-soft: #FAF4ED;
+            --text-muted-coffee: #C7B3AE;
+            --text-light: #FAF5F2;
         }
 
         body {
@@ -51,7 +54,7 @@
             height: 100vh;
             width: 280px;
             background-color: var(--primary-coffee);
-            border-right: 1px solid rgba(200, 150, 62, 0.15);
+            border-right: 1px solid rgba(212, 160, 71, 0.2);
             transition: all 0.3s ease;
             position: fixed;
             z-index: 1000;
@@ -75,7 +78,7 @@
 
         .sidebar-brand {
             padding: 1.5rem 1.2rem;
-            border-bottom: 1px solid rgba(200, 150, 62, 0.1);
+            border-bottom: 1px solid rgba(212, 160, 71, 0.18);
         }
 
         .sidebar-brand h3 {
@@ -96,8 +99,8 @@
 
         .sidebar-user {
             padding: 1.2rem;
-            background: rgba(0, 0, 0, 0.15);
-            border-bottom: 1px solid rgba(200, 150, 62, 0.15);
+            background: rgba(0, 0, 0, 0.18);
+            border-bottom: 1px solid rgba(212, 160, 71, 0.18);
         }
 
         .sidebar-nav {
@@ -130,14 +133,14 @@
         }
 
         .sidebar-nav-link:hover {
-            background-color: rgba(200, 150, 62, 0.1);
-            color: var(--accent-gold);
+            background-color: rgba(212, 160, 71, 0.14);
+            color: var(--accent-gold-hover);
         }
 
         .sidebar-nav-link.active {
             background: linear-gradient(135deg, var(--accent-gold), var(--primary-coffee-light));
             color: #fff;
-            box-shadow: 0 4px 12px rgba(200, 150, 62, 0.25);
+            box-shadow: 0 4px 12px rgba(212, 160, 71, 0.28);
         }
 
         /* Page Content Wrapper */
@@ -152,36 +155,36 @@
 
         .top-navbar {
             background-color: var(--card-coffee-dark);
-            border-bottom: 1px solid rgba(200, 150, 62, 0.15);
+            border-bottom: 1px solid rgba(212, 160, 71, 0.2);
             padding: 0.85rem 1.5rem;
         }
 
         .main-content {
             padding: 2rem;
             flex-grow: 1;
-            background: radial-gradient(circle at top right, var(--primary-coffee-light) 0%, var(--bg-dark-espresso) 70%);
+            background: radial-gradient(circle at top right, var(--primary-coffee-light) 0%, var(--bg-dark-espresso) 75%);
         }
 
         /* Cards Styling */
         .card-coffee {
             background-color: var(--card-coffee-dark);
-            border: 1px solid rgba(200, 150, 62, 0.12);
+            border: 1px solid rgba(212, 160, 71, 0.2);
             border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
             color: var(--text-light);
         }
 
         .card-coffee:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 15px 35px rgba(200, 150, 62, 0.08);
-            border-color: rgba(200, 150, 62, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 14px 30px rgba(212, 160, 71, 0.12);
+            border-color: rgba(212, 160, 71, 0.35);
         }
 
         .card-coffee-header {
             padding: 1.25rem 1.5rem;
-            border-bottom: 1px solid rgba(200, 150, 62, 0.1);
-            background-color: rgba(0, 0, 0, 0.1);
+            border-bottom: 1px solid rgba(212, 160, 71, 0.16);
+            background-color: rgba(255, 255, 255, 0.03);
             border-top-left-radius: 16px;
             border-top-right-radius: 16px;
         }
@@ -192,20 +195,20 @@
 
         /* Buttons Styling */
         .btn-gold {
-            background: linear-gradient(135deg, var(--accent-gold), #B58231);
+            background: linear-gradient(135deg, var(--accent-gold), #BF8B34);
             color: #fff;
             border: none;
             border-radius: 8px;
             font-weight: 600;
             padding: 0.6rem 1.25rem;
             transition: all 0.2s ease;
-            box-shadow: 0 4px 10px rgba(200, 150, 62, 0.2);
+            box-shadow: 0 4px 10px rgba(212, 160, 71, 0.22);
         }
 
         .btn-gold:hover, .btn-gold:focus {
             background: linear-gradient(135deg, var(--accent-gold-hover), var(--accent-gold));
             color: #fff;
-            box-shadow: 0 6px 14px rgba(200, 150, 62, 0.35);
+            box-shadow: 0 6px 14px rgba(212, 160, 71, 0.38);
             transform: translateY(-1px);
         }
 
@@ -222,24 +225,20 @@
         .btn-outline-gold:hover {
             background-color: var(--accent-gold);
             color: #fff;
-            box-shadow: 0 4px 12px rgba(200, 150, 62, 0.2);
+            box-shadow: 0 4px 12px rgba(212, 160, 71, 0.22);
         }
 
-        /* DataTables Custom styling for Coffee theme */
-        .dataTables_wrapper {
-            color: var(--text-light);
-        }
-
+        /* Accessible local table controls and pagination */
         .table-coffee {
             background-color: var(--card-coffee-dark) !important;
-            border-color: rgba(200, 150, 62, 0.15) !important;
+            border-color: rgba(212, 160, 71, 0.2) !important;
             color: var(--text-light) !important;
         }
 
         .table-coffee th {
-            background-color: rgba(0, 0, 0, 0.25) !important;
+            background-color: rgba(30, 18, 16, 0.75) !important;
             color: var(--accent-gold) !important;
-            border-bottom: 2px solid rgba(200, 150, 62, 0.25) !important;
+            border-bottom: 2px solid rgba(212, 160, 71, 0.3) !important;
             padding: 1rem 0.75rem !important;
             text-transform: uppercase;
             font-size: 0.8rem;
@@ -248,61 +247,128 @@
 
         .table-coffee td {
             background-color: transparent !important;
-            border-bottom: 1px solid rgba(200, 150, 62, 0.1) !important;
+            border-bottom: 1px solid rgba(212, 160, 71, 0.12) !important;
             padding: 0.95rem 0.75rem !important;
-            color: var(--text-light) !important;
+            color: var(--text-light);
             vertical-align: middle;
         }
 
         .table-coffee tr:hover td {
-            background-color: rgba(200, 150, 62, 0.04) !important;
+            background-color: rgba(212, 160, 71, 0.08) !important;
         }
 
-        .page-link {
-            background-color: var(--card-coffee-dark) !important;
-            border-color: rgba(200, 150, 62, 0.2) !important;
+        .client-table-wrapper {
+            width: 100%;
+        }
+
+        .client-table-toolbar,
+        .client-table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            color: var(--text-muted-coffee);
+            margin: 0.75rem 0;
+        }
+
+        .client-table-search-label {
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+            color: var(--text-light);
+        }
+
+        .client-table-search,
+        .client-table-page-size {
+            min-height: 2.4rem;
+            background: #211512;
+            border: 1px solid rgba(212, 160, 71, 0.5);
+            border-radius: 0.5rem;
+            color: var(--text-light);
+            padding: 0.4rem 0.7rem;
+        }
+
+        .client-table-search::placeholder {
+            color: #C7B3AE;
+            opacity: 1;
+        }
+
+        .client-table-search:focus,
+        .client-table-page-size:focus {
+            outline: 2px solid var(--accent-gold-hover);
+            outline-offset: 1px;
+        }
+
+        .client-table-navigation {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .client-table-page-button {
+            min-height: 2.4rem;
+            border: 1px solid rgba(212, 160, 71, 0.55);
+            border-radius: 0.45rem;
+            background: #2D1E1B;
+            color: #FAF5F2;
+            padding: 0.35rem 0.75rem;
+        }
+
+        .client-table-page-button:not(:disabled):hover {
+            background: var(--accent-gold);
+            color: #211512;
+        }
+
+        .client-table-page-button:disabled {
+            color: #C7B3AE;
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+
+        .client-table-sortable {
+            cursor: pointer;
+        }
+
+        .client-table-sortable:focus-visible {
+            outline: 2px solid var(--accent-gold-hover);
+            outline-offset: -3px;
+        }
+
+        .client-table-empty {
             color: var(--text-muted-coffee) !important;
+            text-align: center;
+            padding: 1.5rem !important;
         }
 
-        .page-item.active .page-link {
-            background-color: var(--accent-gold) !important;
-            border-color: var(--accent-gold) !important;
-            color: #fff !important;
-        }
+        @media (max-width: 767.98px) {
+            .client-table-search-label {
+                flex: 1 1 100%;
+            }
 
-        .dataTables_info, .dataTables_paginate, .dataTables_length, .dataTables_filter {
-            color: var(--text-muted-coffee) !important;
-            margin-top: 1rem;
-            margin-bottom: 1rem;
-        }
+            .client-table-search {
+                flex: 1;
+                min-width: 0;
+            }
 
-        .dataTables_filter input, .dataTables_length select {
-            background-color: rgba(0, 0, 0, 0.2) !important;
-            border: 1px solid rgba(200, 150, 62, 0.25) !important;
-            color: #fff !important;
-            border-radius: 6px;
-            padding: 0.35rem 0.6rem;
-        }
-
-        .dataTables_filter input:focus, .dataTables_length select:focus {
-            outline: none;
-            border-color: var(--accent-gold) !important;
-            box-shadow: 0 0 0 0.25rem rgba(200, 150, 62, 0.15) !important;
+            .client-table-footer {
+                align-items: flex-start;
+                flex-direction: column;
+            }
         }
 
         /* Form Inputs custom styling */
         .form-control-coffee {
-            background-color: rgba(0, 0, 0, 0.2) !important;
-            border: 1px solid rgba(200, 150, 62, 0.2) !important;
+            background-color: rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid rgba(212, 160, 71, 0.25) !important;
             color: var(--text-light) !important;
             border-radius: 8px;
             padding: 0.65rem 1rem;
         }
 
         .form-control-coffee:focus {
-            background-color: rgba(0, 0, 0, 0.3) !important;
+            background-color: rgba(0, 0, 0, 0.35) !important;
             border-color: var(--accent-gold) !important;
-            box-shadow: 0 0 0 0.25rem rgba(200, 150, 62, 0.15) !important;
+            box-shadow: 0 0 0 0.25rem rgba(212, 160, 71, 0.2) !important;
             color: var(--text-light) !important;
         }
 
@@ -324,7 +390,7 @@
         .badge-gold {
             background: linear-gradient(135deg, #FFE082, var(--accent-gold));
             color: #3b2806;
-            box-shadow: 0 2px 8px rgba(200, 150, 62, 0.2);
+            box-shadow: 0 2px 8px rgba(212, 160, 71, 0.25);
         }
         .badge-silver {
             background: linear-gradient(135deg, #E0E0E0, #9E9E9E);
@@ -337,7 +403,7 @@
 
         /* Toast / Alert overrides */
         .alert-coffee {
-            background-color: rgba(200, 150, 62, 0.15);
+            background-color: rgba(212, 160, 71, 0.18);
             border: 1px solid var(--accent-gold);
             color: var(--accent-gold-hover);
             border-radius: 10px;
@@ -401,7 +467,7 @@
                     @if(Auth::user()->role === 'owner')
                         <i class="fa-solid fa-crown me-1"></i> Owner
                     @elseif(Auth::user()->role === 'barista')
-                        <i class="fa-solid fa-mug-hot me-1"></i> Barista
+                        <i class="fa-solid fa-cash-register me-1"></i> Kasir
                     @else
                         <i class="fa-solid fa-user me-1"></i> Pelanggan
                     @endif
@@ -420,7 +486,7 @@
                 </li>
                 <li class="sidebar-nav-item">
                     <a href="{{ route('owner.produk.index') }}" class="sidebar-nav-link {{ Route::is('owner.produk.*') ? 'active' : '' }}">
-                        <i class="fa-solid fa-coffee-mug-hot"></i> Menu Kopi (Produk)
+                        <i class="fa-solid fa-mug-hot"></i> Menu Kopi (Produk)
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
@@ -572,12 +638,13 @@
     <!-- Bootstrap 5 Bundle JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- jQuery & DataTables JS -->
     <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
-    <!-- Sidebar Responsive Toggle -->
+    <!-- Local table search, sorting, and pagination (no external plugin required) -->
+    <script type="module" src="{{ asset('js/table-pagination.js') }}"></script>
+
+    @yield('scripts')
+
     <script>
         $(document).ready(function() {
             $("#menu-toggle").click(function(e) {

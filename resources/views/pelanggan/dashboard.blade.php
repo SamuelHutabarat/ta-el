@@ -158,9 +158,9 @@
                             <h3 class="fw-bold text-warning m-0">Rp {{ number_format($totalSpent, 0, ',', '.') }}</h3>
                             <small class="text-muted-coffee mt-2 d-block" style="font-size: 0.8rem;">
                                 @if($pelanggan->status_member === 'Bronze')
-                                    Belanja Rp {{ number_format(500000 - $totalSpent, 0, ',', '.') }} lagi untuk naik level Silver!
+                                    Belanja Rp {{ number_format(max(0, 500000 - $totalSpent), 0, ',', '.') }} lagi untuk naik level Silver!
                                 @elseif($pelanggan->status_member === 'Silver')
-                                    Belanja Rp {{ number_format(1000000 - $totalSpent, 0, ',', '.') }} lagi untuk naik level Gold!
+                                    Belanja Rp {{ number_format(max(0, 1000000 - $totalSpent), 0, ',', '.') }} lagi untuk naik level Gold!
                                 @else
                                     <span class="text-success"><i class="fa-solid fa-crown"></i> Anda telah mencapai level member tertinggi!</span>
                                 @endif

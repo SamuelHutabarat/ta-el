@@ -43,7 +43,7 @@
                                     @if($user->role === 'owner')
                                         <span class="badge bg-warning text-dark fw-bold px-2.5 py-1.5"><i class="fa-solid fa-crown me-1"></i> Owner</span>
                                     @elseif($user->role === 'barista')
-                                        <span class="badge bg-info text-dark fw-bold px-2.5 py-1.5"><i class="fa-solid fa-mug-hot me-1"></i> Barista</span>
+                                        <span class="badge bg-info text-dark fw-bold px-2.5 py-1.5"><i class="fa-solid fa-cash-register me-1"></i> Kasir</span>
                                     @else
                                         <span class="badge bg-secondary text-light fw-bold px-2.5 py-1.5"><i class="fa-solid fa-user me-1"></i> Pelanggan</span>
                                     @endif
@@ -79,17 +79,4 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-    $(document).ready(function() {
-        $('#penggunaTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
-            },
-            "pageLength": 10,
-            "order": [[0, "asc"]],
-            "responsive": true
-        });
-    });
-</script>
-@endsection
+

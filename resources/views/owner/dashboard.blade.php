@@ -79,11 +79,14 @@
         <!-- Sales Chart -->
         <div class="col-12 col-lg-8">
             <div class="card-coffee h-100">
-                <div class="card-coffee-header">
+                <div class="card-coffee-header d-flex justify-content-between align-items-center">
                     <h5 class="m-0 fw-bold"><i class="fa-solid fa-chart-simple me-2 text-warning"></i>Grafik Omset 7 Hari Terakhir</h5>
+                    <span class="badge bg-warning bg-opacity-20 text-warning border border-warning border-opacity-30 px-2.5 py-1 font-monospace" style="font-size: 0.8rem;">
+                        <i class="fa-regular fa-calendar me-1"></i> {{ $chartPeriod ?? '7 Hari Terakhir' }}
+                    </span>
                 </div>
                 <div class="card-coffee-body">
-                    <div style="height: 320px;">
+                    <div style="height: 320px; position: relative;">
                         <canvas id="salesChart"></canvas>
                     </div>
                 </div>
@@ -93,15 +96,18 @@
         <!-- Member Level Donut -->
         <div class="col-12 col-lg-4">
             <div class="card-coffee h-100">
-                <div class="card-coffee-header">
+                <div class="card-coffee-header d-flex justify-content-between align-items-center">
                     <h5 class="m-0 fw-bold"><i class="fa-solid fa-chart-pie me-2 text-warning"></i>Distribusi Level Member</h5>
+                    <span class="badge bg-secondary bg-opacity-25 text-light px-2 py-1 font-monospace" style="font-size: 0.75rem;">
+                        {{ $totalMembers }} Member
+                    </span>
                 </div>
                 <div class="card-coffee-body d-flex flex-column justify-content-center align-items-center">
-                    <div style="height: 240px; width: 100%; max-width: 240px; position: relative;">
+                    <div style="height: 240px; width: 100%; max-width: 250px; position: relative;">
                         <canvas id="memberChart"></canvas>
                     </div>
                     <div class="mt-3 text-center">
-                        <small class="text-muted-coffee">Fokus Loyalitas: Hubungan Pelanggan (CRM)</small>
+                        <small class="text-muted-coffee">Proporsi Pelanggan CRM (Bronze, Silver, Gold)</small>
                     </div>
                 </div>
             </div>
@@ -199,103 +205,163 @@
 @section('scripts')
 <script>
     document.addEventListener("DOMContentLoaded", function () {
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js gagal dimuat.');
+            return;
+        }
+
         // 1. Sales Chart Configuration
-        const ctxSales = document.getElementById('salesChart').getContext('2d');
-        new Chart(ctxSales, {
-            type: 'bar',
-            data: {
-                labels: {!! json_encode($chartLabels) !!},
-                datasets: [{
-                    label: 'Omset Penjualan (Rupiah)',
-                    data: {!! json_encode($chartValues) !!},
-                    backgroundColor: 'rgba(200, 150, 62, 0.75)',
-                    borderColor: 'rgba(200, 150, 62, 1)',
-                    borderWidth: 1.5,
-                    borderRadius: 6,
-                    hoverBackgroundColor: 'rgba(229, 178, 93, 0.95)'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        display: false
-                    },
-                    tooltip: {
-                        callbacks: {
-                            label: function(context) {
-                                let val = context.raw;
-                                return 'Omset: Rp ' + new Intl.NumberFormat('id-ID').format(val);
+        const salesCanvas = document.getElementById('salesChart');
+        if (salesCanvas) {
+            const ctxSales = salesCanvas.getContext('2d');
+            
+            // Elegant vertical gold-to-coffee gradient
+            const salesGradient = ctxSales.createLinearGradient(0, 0, 0, 300);
+            salesGradient.addColorStop(0, 'rgba(212, 160, 71, 0.92)');
+            salesGradient.addColorStop(1, 'rgba(86, 55, 50, 0.4)');
+
+            new Chart(ctxSales, {
+                type: 'bar',
+                data: {
+                    labels: {!! json_encode($chartLabels) !!},
+                    datasets: [{
+                        label: 'Omset Penjualan (Rp)',
+                        data: {!! json_encode($chartValues) !!},
+                        backgroundColor: salesGradient,
+                        borderColor: '#EAB965',
+                        borderWidth: 1.5,
+                        borderRadius: 8,
+                        borderSkipped: false,
+                        hoverBackgroundColor: 'rgba(234, 185, 101, 1)',
+                        hoverBorderColor: '#FFFFFF',
+                        barPercentage: 0.65,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(34, 22, 20, 0.95)',
+                            titleColor: '#EAB965',
+                            bodyColor: '#FAF5F2',
+                            borderColor: 'rgba(212, 160, 71, 0.4)',
+                            borderWidth: 1,
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.raw || 0;
+                                    return ' Omset: Rp ' + new Intl.NumberFormat('id-ID').format(val);
+                                }
                             }
                         }
-                    }
-                },
-                scales: {
-                    x: {
-                        grid: {
-                            color: 'rgba(200, 150, 62, 0.05)'
-                        },
-                        ticks: {
-                            color: '#A58E8A'
-                        }
                     },
-                    y: {
-                        grid: {
-                            color: 'rgba(200, 150, 62, 0.08)'
-                        },
-                        ticks: {
-                            color: '#A58E8A',
-                            callback: function(value) {
-                                if (value >= 1000000) {
-                                    return (value / 1000000) + 'jt';
-                                } else if (value >= 1000) {
-                                    return (value / 1000) + 'k';
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(212, 160, 71, 0.08)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#C7B3AE',
+                                font: {
+                                    family: "'Outfit', sans-serif",
+                                    weight: 500
                                 }
-                                return value;
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(212, 160, 71, 0.1)',
+                                drawBorder: false
+                            },
+                            ticks: {
+                                color: '#C7B3AE',
+                                font: {
+                                    family: "'Outfit', sans-serif"
+                                },
+                                callback: function(value) {
+                                    if (value >= 1000000) {
+                                        return (value / 1000000) + 'jt';
+                                    } else if (value >= 1000) {
+                                        return (value / 1000) + 'k';
+                                    }
+                                    return value;
+                                }
                             }
                         }
                     }
                 }
-            }
-        });
+            });
+        }
 
         // 2. Member Distribution Chart Configuration
-        const ctxMember = document.getElementById('memberChart').getContext('2d');
-        new Chart(ctxMember, {
-            type: 'doughnut',
-            data: {
-                labels: {!! json_encode($levelLabels) !!},
-                datasets: [{
-                    data: {!! json_encode($levelCounts) !!},
-                    backgroundColor: [
-                        '#8D6E63', // Bronze
-                        '#B0BEC5', // Silver
-                        '#C8963E'  // Gold
-                    ],
-                    borderWidth: 2,
-                    borderColor: '#1F1412',
-                    hoverOffset: 8
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: {
-                        position: 'bottom',
-                        labels: {
-                            color: '#F4EBE8',
-                            font: {
-                                family: 'Outfit'
-                            },
-                            padding: 15
-                        }
-                    }
+        const memberCanvas = document.getElementById('memberChart');
+        if (memberCanvas) {
+            const ctxMember = memberCanvas.getContext('2d');
+            const memberCounts = {!! json_encode($levelCounts) !!};
+            const totalMembers = memberCounts.reduce((a, b) => a + b, 0);
+
+            new Chart(ctxMember, {
+                type: 'doughnut',
+                data: {
+                    labels: {!! json_encode($levelLabels) !!},
+                    datasets: [{
+                        data: memberCounts,
+                        backgroundColor: [
+                            '#B87333', // Bronze
+                            '#B0BEC5', // Silver
+                            '#D4A047'  // Gold
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#2D1E1B',
+                        hoverBorderColor: '#FFFFFF',
+                        hoverOffset: 6
+                    }]
                 },
-                cutout: '65%'
-            }
-        });
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#FAF5F2',
+                                font: {
+                                    family: "'Outfit', sans-serif",
+                                    size: 12
+                                },
+                                padding: 14,
+                                usePointStyle: true,
+                                pointStyle: 'circle'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(34, 22, 20, 0.95)',
+                            titleColor: '#EAB965',
+                            bodyColor: '#FAF5F2',
+                            borderColor: 'rgba(212, 160, 71, 0.4)',
+                            borderWidth: 1,
+                            padding: 10,
+                            callbacks: {
+                                label: function(context) {
+                                    let val = context.raw || 0;
+                                    let pct = totalMembers > 0 ? Math.round((val / totalMembers) * 100) : 0;
+                                    return ' ' + context.label + ': ' + val + ' Member (' + pct + '%)';
+                                }
+                            }
+                        }
+                    },
+                    cutout: '62%'
+                }
+            });
+        }
     });
 </script>
 @endsection

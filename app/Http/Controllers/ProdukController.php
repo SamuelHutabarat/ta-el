@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Produk;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 
 class ProdukController extends Controller
 {
@@ -36,14 +37,14 @@ class ProdukController extends Controller
             'harga' => 'required|numeric|min:0',
             'stok' => 'required|integer|min:0',
             'deskripsi' => 'nullable|string',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'gambar' => 'nullable|image|mimes:jpeg,jpg,png,webp,jfif|max:2048',
         ]);
 
         $input = $request->only(['nama_produk', 'kategori', 'harga', 'stok', 'deskripsi']);
 
         if ($request->hasFile('gambar')) {
             $image = $request->file('gambar');
-            $name = time() . '_' . str_replace(' ', '_', strtolower($input['nama_produk'])) . '.' . $image->getClientOriginalExtension();
+            $name = Str::slug($input['nama_produk']) . '_' . Str::uuid() . '.' . strtolower($image->getClientOriginalExtension());
             
             // Move directly to public/uploads/produk
             $destinationPath = public_path('uploads/produk');
@@ -56,7 +57,7 @@ class ProdukController extends Controller
 
         Produk::create($input);
 
-        return redirect()->route('owner.produk.index')->with('success', 'Produk berhasil ditambahkan.');
+        return redirect()->route($this->productIndexRoute())->with('success', 'Produk berhasil ditambahkan.');
     }
 
     /**
@@ -86,14 +87,14 @@ class ProdukController extends Controller
             'harga' => 'required|numeric|min:0',
             'stok' => 'required|integer|min:0',
             'deskripsi' => 'nullable|string',
-            'gambar' => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'gambar' => 'nullable|image|mimes:jpeg,jpg,png,webp,jfif|max:2048',
         ]);
 
         $input = $request->only(['nama_produk', 'kategori', 'harga', 'stok', 'deskripsi']);
 
         if ($request->hasFile('gambar')) {
             $image = $request->file('gambar');
-            $name = time() . '_' . str_replace(' ', '_', strtolower($input['nama_produk'])) . '.' . $image->getClientOriginalExtension();
+            $name = Str::slug($input['nama_produk']) . '_' . Str::uuid() . '.' . strtolower($image->getClientOriginalExtension());
             
             $destinationPath = public_path('uploads/produk');
             if (!File::isDirectory($destinationPath)) {
@@ -111,7 +112,7 @@ class ProdukController extends Controller
 
         $produk->update($input);
 
-        return redirect()->route('owner.produk.index')->with('success', 'Produk berhasil diperbarui.');
+        return redirect()->route($this->productIndexRoute())->with('success', 'Produk berhasil diperbarui.');
     }
 
     /**
@@ -119,6 +120,11 @@ class ProdukController extends Controller
      */
     public function destroy(Produk $produk)
     {
+        // Prevent deleting products that have transaction history to maintain financial and receipt integrity
+        if ($produk->detail_transaksi()->exists()) {
+            return redirect()->route('owner.produk.index')->with('error', 'Produk "' . $produk->nama_produk . '" tidak dapat dihapus karena sudah memiliki riwayat transaksi penjualan. Silakan ubah stok menjadi 0 untuk menonaktifkan menu.');
+        }
+
         // Delete image file from storage if exists
         if ($produk->gambar && File::exists(public_path($produk->gambar))) {
             File::delete(public_path($produk->gambar));
@@ -127,5 +133,10 @@ class ProdukController extends Controller
         $produk->delete();
 
         return redirect()->route('owner.produk.index')->with('success', 'Produk berhasil dihapus.');
+    }
+
+    private function productIndexRoute(): string
+    {
+        return auth()->user()?->role === 'barista' ? 'barista.produk' : 'owner.produk.index';
     }
 }

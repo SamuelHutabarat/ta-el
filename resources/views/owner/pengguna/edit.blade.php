@@ -47,7 +47,7 @@
                         <label for="role" class="form-label form-label-coffee">Hak Akses / Role Sistem <span class="text-danger">*</span></label>
                         <select class="form-select form-control-coffee @error('role') is-invalid @enderror" id="role" name="role" required {{ Auth::id() === $user->id ? 'disabled' : '' }}>
                             <option value="owner" {{ old('role', $user->role) === 'owner' ? 'selected' : '' }}>Owner (Pemilik Toko)</option>
-                            <option value="barista" {{ old('role', $user->role) === 'barista' ? 'selected' : '' }}>Barista (Kasir / Pembuat Kopi)</option>
+                            <option value="barista" {{ old('role', $user->role) === 'barista' ? 'selected' : '' }}>Kasir / Barista</option>
                             <option value="pelanggan" {{ old('role', $user->role) === 'pelanggan' ? 'selected' : '' }}>Pelanggan (Member CRM)</option>
                         </select>
                         @if(Auth::id() === $user->id)

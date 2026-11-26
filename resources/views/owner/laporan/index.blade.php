@@ -151,19 +151,4 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-    $(document).ready(function() {
-        $('#laporanTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
-            },
-            "pageLength": 10,
-            "order": [[1, "desc"]],
-            "responsive": true,
-            "searching": false, // filter inputs handled by our dates form
-            "paging": true
-        });
-    });
-</script>
-@endsection
+

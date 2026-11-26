@@ -47,7 +47,7 @@
                         <select class="form-select form-control-coffee @error('role') is-invalid @enderror" id="role" name="role" required>
                             <option value="" disabled selected>Pilih Role...</option>
                             <option value="owner" {{ old('role') === 'owner' ? 'selected' : '' }}>Owner (Pemilik Toko)</option>
-                            <option value="barista" {{ old('role') === 'barista' ? 'selected' : '' }}>Barista (Kasir / Pembuat Kopi)</option>
+                            <option value="barista" {{ old('role') === 'barista' ? 'selected' : '' }}>Kasir / Barista</option>
                             <option value="pelanggan" {{ old('role') === 'pelanggan' ? 'selected' : '' }}>Pelanggan (Member CRM)</option>
                         </select>
                         @error('role')

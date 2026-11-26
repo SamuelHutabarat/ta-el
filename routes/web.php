@@ -52,7 +52,7 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
     Route::resource('promosi', PromosiController::class);
     
     // CRUD Pengguna (Users/Employees)
-    Route::resource('pengguna', OwnerController::class)->except(['dashboard']);
+    Route::resource('pengguna', OwnerController::class)->except(['dashboard', 'show']);
     
     // Kelola Transaksi
     Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
@@ -73,6 +73,10 @@ Route::middleware(['auth', 'role:owner'])->prefix('owner')->name('owner.')->grou
 Route::middleware(['auth', 'role:owner,barista'])->prefix('barista')->name('barista.')->group(function () {
     Route::get('/dashboard', [TransaksiController::class, 'baristaDashboard'])->name('dashboard');
     Route::get('/produk', [TransaksiController::class, 'baristaProduk'])->name('produk');
+    Route::get('/produk/create', [ProdukController::class, 'create'])->name('produk.create');
+    Route::post('/produk', [ProdukController::class, 'store'])->name('produk.store');
+    Route::get('/produk/{produk}/edit', [ProdukController::class, 'edit'])->name('produk.edit');
+    Route::put('/produk/{produk}', [ProdukController::class, 'update'])->name('produk.update');
     
     // POS / Checkout Transaksi
     Route::get('/transaksi/baru', [TransaksiController::class, 'create'])->name('transaksi.create');

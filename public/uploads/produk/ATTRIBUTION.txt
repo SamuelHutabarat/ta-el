@@ -1,0 +1,9 @@
+Product photo attribution
+
+Americano product image: “A cup of Americano in Lano Coffee (Palembang, SS).jpg”
+Author: Firzafp
+Source: https://commons.wikimedia.org/wiki/File:A_cup_of_Americano_in_Lano_Coffee_(Palembang,_SS).jpg
+License: CC BY-SA 4.0 — https://creativecommons.org/licenses/by-sa/4.0/
+Changes: downloaded the 960 px Wikimedia thumbnail for the menu card.
+
+If redistributing the image, retain this attribution and comply with CC BY-SA 4.0.

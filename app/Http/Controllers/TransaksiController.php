@@ -187,13 +187,13 @@ class TransaksiController extends Controller
 
             // Apply Point Redemption Discount
             $pointsRedeemed = 0;
-            if ($pelanggan && $usePoints) {
-                // Let's assume they redeem points in increments of 50 points
-                // 50 points = Rp 22.000 discount (cost of signature coffee)
-                $maxPossibleRedeems = floor($pelanggan->poin / 50);
-                if ($maxPossibleRedeems > 0) {
-                    $pointsRedeemed = $maxPossibleRedeems * 50;
-                    $diskon += ($maxPossibleRedeems * 22000.00);
+            if ($pelanggan && $request->poin_digunakan > 0) {
+                // Redeem in units of 50 points (50 pts = Rp 22.000 discount)
+                $requestedPoints = (int) $request->poin_digunakan;
+                $availableRedeemUnits = floor(min($requestedPoints, $pelanggan->poin) / 50);
+                if ($availableRedeemUnits > 0) {
+                    $pointsRedeemed = $availableRedeemUnits * 50;
+                    $diskon += ($availableRedeemUnits * 22000.00);
                 }
             }
 
@@ -214,10 +214,14 @@ class TransaksiController extends Controller
             // Calculate new points earned (1 point per 10k spent)
             $poinDapat = floor($totalAkhir / 10000);
 
-            // Generate unique order number
+            // Generate unique sequential order number
             $todayStr = Carbon::now()->format('Ymd');
-            $randomStr = str_pad(rand(1000, 9999), 4, '0', STR_PAD_LEFT);
-            $kodeTransaksi = 'TRX-' . $todayStr . '-' . $randomStr;
+            $todayCount = Transaksi::whereDate('created_at', Carbon::today())->count() + 1;
+            $kodeTransaksi = 'TRX-' . $todayStr . '-' . str_pad($todayCount, 4, '0', STR_PAD_LEFT);
+            while (Transaksi::where('kode_transaksi', $kodeTransaksi)->exists()) {
+                $todayCount++;
+                $kodeTransaksi = 'TRX-' . $todayStr . '-' . str_pad($todayCount, 4, '0', STR_PAD_LEFT);
+            }
 
             // 3. Create Transaction Record
             $transaksi = Transaksi::create([

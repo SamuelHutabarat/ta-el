@@ -94,17 +94,4 @@
 </div>
 @endsection
 
-@section('scripts')
-<script>
-    $(document).ready(function() {
-        $('#promosiTable').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.13.7/i18n/id.json"
-            },
-            "pageLength": 10,
-            "order": [[0, "asc"]],
-            "responsive": true
-        });
-    });
-</script>
-@endsection
+

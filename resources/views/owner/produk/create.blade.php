@@ -3,10 +3,11 @@
 @title('Tambah Menu - CRM Owner')
 
 @section('content')
+@php($isCashier = auth()->user()->role === 'barista')
 <div class="container-fluid p-0" style="max-width: 800px; margin: 0 auto;">
     <div class="row mb-4">
         <div class="col-12">
-            <a href="{{ route('owner.produk.index') }}" class="text-warning text-decoration-none fw-bold">
+            <a href="{{ $isCashier ? route('barista.produk') : route('owner.produk.index') }}" class="text-warning text-decoration-none fw-bold">
                 <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Inventori
             </a>
             <h2 class="fw-bold mt-2 mb-1" style="font-family: 'Playfair Display', serif;">Tambah Menu Baru</h2>
@@ -19,7 +20,7 @@
             <h5 class="m-0 fw-bold"><i class="fa-solid fa-plus me-2 text-warning"></i>Formulir Data Produk</h5>
         </div>
         <div class="card-coffee-body">
-            <form action="{{ route('owner.produk.store') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ $isCashier ? route('barista.produk.store') : route('owner.produk.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 
                 <div class="row g-3">

@@ -16,13 +16,14 @@
     
     <style>
         :root {
-            --primary-coffee: #2C1B18;
-            --primary-coffee-light: #4A2E2B;
-            --accent-gold: #C8963E;
-            --bg-dark-espresso: #140C0B;
-            --card-coffee-dark: #1F1412;
-            --text-light: #F4EBE8;
-            --text-muted-coffee: #A58E8A;
+            --primary-coffee: #3A2420;
+            --primary-coffee-light: #563732;
+            --accent-gold: #D4A047;
+            --accent-gold-hover: #EAB965;
+            --bg-dark-espresso: #221614;
+            --card-coffee-dark: #2D1E1B;
+            --text-light: #FAF5F2;
+            --text-muted-coffee: #C7B3AE;
         }
 
         body {
@@ -38,9 +39,9 @@
 
         .login-card {
             background-color: var(--card-coffee-dark);
-            border: 1px solid rgba(200, 150, 62, 0.15);
+            border: 1px solid rgba(212, 160, 71, 0.22);
             border-radius: 20px;
-            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
             width: 100%;
             max-width: 450px;
             overflow: hidden;
@@ -49,7 +50,7 @@
         .login-header {
             text-align: center;
             padding: 2.5rem 2rem 1.5rem;
-            border-bottom: 1px solid rgba(200, 150, 62, 0.1);
+            border-bottom: 1px solid rgba(212, 160, 71, 0.16);
         }
 
         .login-header h2 {
@@ -206,8 +207,8 @@
                         <td class="font-monospace fw-bold" style="font-size: 0.8rem;">barista@tkp.com</td>
                     </tr>
                     <tr>
-                        <td class="text-muted-coffee">Member:</td>
-                        <td class="font-monospace fw-bold" style="font-size: 0.8rem;">samuel@tkp.com</td>
+                        <td class="text-muted-coffee">Member (Gold):</td>
+                        <td class="font-monospace fw-bold" style="font-size: 0.8rem;">budi@tkp.com / samuel@tkp.com</td>
                     </tr>
                 </table>
             </div>
