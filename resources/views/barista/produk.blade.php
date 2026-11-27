@@ -1,6 +1,6 @@
 @extends('layouts.crm')
 
-@title('Daftar Menu Kopi')
+@section('title', 'Daftar Menu Kopi')
 
 @section('content')
 <div class="container-fluid p-0">

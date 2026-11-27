@@ -1,6 +1,6 @@
 @extends('layouts.crm')
 
-@title('Detail Nota Transaksi')
+@section('title', 'Detail Nota Transaksi')
 
 @section('styles')
 <style>

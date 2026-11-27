@@ -1,6 +1,6 @@
 @extends('layouts.crm')
 
-@title('POS Kasir - Kopi TKP')
+@section('title', 'POS Kasir - Kopi TKP')
 
 @section('styles')
 <style>

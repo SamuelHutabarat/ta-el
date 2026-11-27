@@ -1,6 +1,6 @@
 @extends('layouts.crm')
 
-@title('Voucher & Promosi Member')
+@section('title', 'Voucher & Promosi Member')
 
 @section('content')
 <div class="container-fluid p-0">

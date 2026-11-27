@@ -1,6 +1,6 @@
 @extends('layouts.crm')
 
-@title('Dashboard Member Kopi TKP')
+@section('title', 'Dashboard Member Kopi TKP')
 
 @section('styles')
 <style>

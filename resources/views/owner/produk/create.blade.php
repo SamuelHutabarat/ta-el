@@ -1,6 +1,6 @@
 @extends('layouts.crm')
 
-@title('Tambah Menu - CRM Owner')
+@section('title', 'Tambah Menu - CRM Owner')
 
 @section('content')
 @php($isCashier = auth()->user()->role === 'barista')

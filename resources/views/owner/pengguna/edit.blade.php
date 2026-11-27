@@ -1,6 +1,6 @@
 @extends('layouts.crm')
 
-@title('Edit Pengguna - CRM Owner')
+@section('title', 'Edit Pengguna - CRM Owner')
 
 @section('content')
 <div class="container-fluid p-0" style="max-width: 800px; margin: 0 auto;">
