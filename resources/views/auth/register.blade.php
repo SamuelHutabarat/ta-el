@@ -111,7 +111,7 @@
         <!-- Logo Header -->
         <div class="register-header">
             <h2>Kopi Tempat Kamu Pulang</h2>
-            <p>Registrasi Member CRM Baru</p>
+            <p>Daftar Member Baru (nama &amp; nomor telepon)</p>
         </div>
 
         <div class="register-body">
@@ -138,12 +138,12 @@
                     </div>
                 </div>
 
-                <!-- Email Input -->
+                <!-- Phone Input -->
                 <div class="mb-3">
-                    <label for="email" class="form-label" style="color: var(--text-muted-coffee); font-weight: 500;">Alamat Email</label>
+                    <label for="no_telp" class="form-label" style="color: var(--text-muted-coffee); font-weight: 500;">Nomor Telepon (untuk login)</label>
                     <div class="input-group">
-                        <span class="input-group-text bg-dark border-secondary text-muted-coffee" style="border-color: rgba(200, 150, 62, 0.2) !important;"><i class="fa-solid fa-envelope"></i></span>
-                        <input type="email" class="form-control form-control-coffee" id="email" name="email" value="{{ old('email') }}" placeholder="nama@email.com" required autocomplete="username">
+                        <span class="input-group-text bg-dark border-secondary text-muted-coffee" style="border-color: rgba(200, 150, 62, 0.2) !important;"><i class="fa-solid fa-phone"></i></span>
+                        <input type="tel" class="form-control form-control-coffee" id="no_telp" name="no_telp" value="{{ old('no_telp') }}" placeholder="Contoh: 081234567890" required autocomplete="tel">
                     </div>
                 </div>
 

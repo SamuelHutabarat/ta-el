@@ -7,7 +7,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <h2 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Riwayat Belanja Anda</h2>
-            <p class="text-muted-coffee">Pantau rincian transaksi belanja, potongan harga, dan perolehan poin loyalitas Anda.</p>
+            <p class="text-muted-coffee">Pantau rincian transaksi belanja, potongan harga, dan perolehan poin reward Anda.</p>
         </div>
     </div>
 
@@ -22,7 +22,7 @@
                         <tr>
                             <th>Kode Transaksi</th>
                             <th>Tanggal / Waktu</th>
-                            <th>Kasir / Barista</th>
+                            <th>Kasir</th>
                             <th>Subtotal</th>
                             <th>Diskon Member/Kupon</th>
                             <th>Total Akhir</th>
@@ -36,7 +36,7 @@
                             <tr>
                                 <td class="fw-bold text-warning">{{ $t->kode_transaksi }}</td>
                                 <td>{{ $t->created_at->format('d/m/Y H:i') }}</td>
-                                <td>{{ $t->user ? $t->user->name : 'Barista' }}</td>
+                                <td>{{ $t->user ? $t->user->name : 'Kasir' }}</td>
                                 <td>Rp {{ number_format($t->total_harga, 0, ',', '.') }}</td>
                                 <td class="text-danger fw-bold">-Rp {{ number_format($t->diskon, 0, ',', '.') }}</td>
                                 <td class="text-success fw-bold">Rp {{ number_format($t->total_akhir, 0, ',', '.') }}</td>

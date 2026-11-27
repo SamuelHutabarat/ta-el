@@ -125,7 +125,7 @@
         <!-- Logo Header -->
         <div class="login-header">
             <h2>Kopi Tempat Kamu Pulang</h2>
-            <p>Portal CRM & Loyalitas Member</p>
+            <p>Portal CRM Member</p>
         </div>
 
         <div class="login-body">
@@ -152,10 +152,10 @@
 
                 <!-- Email Input -->
                 <div class="mb-3">
-                    <label for="email" class="form-label" style="color: var(--text-muted-coffee); font-weight: 500;">Alamat Email</label>
+                    <label for="email" class="form-label" style="color: var(--text-muted-coffee); font-weight: 500;">Email atau No. Telepon</label>
                     <div class="input-group">
                         <span class="input-group-text bg-dark border-secondary text-muted-coffee" style="border-color: rgba(200, 150, 62, 0.2) !important;"><i class="fa-solid fa-envelope"></i></span>
-                        <input type="email" class="form-control form-control-coffee" id="email" name="email" value="{{ old('email') }}" placeholder="nama@email.com" required autofocus autocomplete="username">
+                        <input type="text" class="form-control form-control-coffee" id="email" name="email" value="{{ old('email') }}" placeholder="Email staf, atau nomor telepon member" required autofocus autocomplete="username">
                     </div>
                 </div>
 
@@ -203,12 +203,12 @@
                         <td class="font-monospace fw-bold" style="font-size: 0.8rem;">owner@tkp.com</td>
                     </tr>
                     <tr>
-                        <td class="text-muted-coffee">Barista:</td>
-                        <td class="font-monospace fw-bold" style="font-size: 0.8rem;">barista@tkp.com</td>
+                        <td class="text-muted-coffee">Kasir:</td>
+                        <td class="font-monospace fw-bold" style="font-size: 0.8rem;">owit@tkp.com / tantri@tkp.com</td>
                     </tr>
                     <tr>
                         <td class="text-muted-coffee">Member (Gold):</td>
-                        <td class="font-monospace fw-bold" style="font-size: 0.8rem;">budi@tkp.com / samuel@tkp.com</td>
+                        <td class="font-monospace fw-bold" style="font-size: 0.8rem;">081234567890 / 081298765432</td>
                     </tr>
                 </table>
             </div>

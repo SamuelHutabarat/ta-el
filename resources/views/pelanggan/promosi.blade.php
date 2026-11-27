@@ -7,7 +7,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <h2 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Voucher & Penukaran Poin Reward</h2>
-            <p class="text-muted-coffee">Gunakan poin loyalitas belanja Anda untuk mengklaim voucher potongan atau kopi gratis.</p>
+            <p class="text-muted-coffee">Gunakan poin reward belanja Anda untuk mengklaim voucher potongan atau kopi gratis.</p>
         </div>
     </div>
 
@@ -19,7 +19,7 @@
                     <i class="fa-solid fa-coins fs-2"></i>
                 </div>
                 <div class="ms-3">
-                    <h5 class="fw-bold text-light m-0">Koin Loyalitas Anda</h5>
+                    <h5 class="fw-bold text-light m-0">Poin Reward Anda</h5>
                     <p class="text-muted-coffee m-0" style="font-size: 0.85rem;">Tingkatkan terus belanjamu untuk mengumpulkan lebih banyak poin.</p>
                 </div>
             </div>

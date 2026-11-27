@@ -35,9 +35,18 @@
 
                     <!-- Email -->
                     <div class="col-12 col-md-6">
-                        <label for="email" class="form-label form-label-coffee">Alamat Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control form-control-coffee @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $user->email) }}" required>
+                        <label for="email" class="form-label form-label-coffee">Alamat Email (wajib untuk Owner &amp; Kasir)</label>
+                        <input type="email" class="form-control form-control-coffee @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $user->email) }}">
                         @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- No. Telepon -->
+                    <div class="col-12 col-md-6">
+                        <label for="no_telp" class="form-label form-label-coffee">No. Telepon (wajib untuk Pelanggan)</label>
+                        <input type="text" class="form-control form-control-coffee @error('no_telp') is-invalid @enderror" id="no_telp" name="no_telp" value="{{ old('no_telp', $user->no_telp) }}" placeholder="Contoh: 081234567890">
+                        @error('no_telp')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -47,7 +56,7 @@
                         <label for="role" class="form-label form-label-coffee">Hak Akses / Role Sistem <span class="text-danger">*</span></label>
                         <select class="form-select form-control-coffee @error('role') is-invalid @enderror" id="role" name="role" required {{ Auth::id() === $user->id ? 'disabled' : '' }}>
                             <option value="owner" {{ old('role', $user->role) === 'owner' ? 'selected' : '' }}>Owner (Pemilik Toko)</option>
-                            <option value="barista" {{ old('role', $user->role) === 'barista' ? 'selected' : '' }}>Kasir / Barista</option>
+                            <option value="kasir" {{ old('role', $user->role) === 'kasir' ? 'selected' : '' }}>Kasir</option>
                             <option value="pelanggan" {{ old('role', $user->role) === 'pelanggan' ? 'selected' : '' }}>Pelanggan (Member CRM)</option>
                         </select>
                         @if(Auth::id() === $user->id)

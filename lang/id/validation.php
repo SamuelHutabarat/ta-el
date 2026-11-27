@@ -1,0 +1,47 @@
+<?php
+
+// Pesan validasi Bahasa Indonesia (terjemahan minimal untuk form CRM).
+return [
+    'accepted' => ':attribute harus diterima.',
+    'before' => ':attribute harus tanggal sebelum :date.',
+    'confirmed' => 'Konfirmasi :attribute tidak cocok.',
+    'date' => ':attribute bukan tanggal yang valid.',
+    'email' => 'Format :attribute tidak valid.',
+    'exists' => ':attribute yang dipilih tidak valid.',
+    'in' => ':attribute yang dipilih tidak valid.',
+    'integer' => ':attribute harus berupa angka bulat.',
+    'lowercase' => ':attribute harus huruf kecil semua.',
+    'max' => [
+        'numeric' => ':attribute maksimal :max.',
+        'string' => ':attribute maksimal :max karakter.',
+    ],
+    'min' => [
+        'numeric' => ':attribute minimal :min.',
+        'string' => ':attribute minimal :min karakter.',
+    ],
+    'numeric' => ':attribute harus berupa angka.',
+    'required' => ':attribute wajib diisi.',
+    'required_if' => ':attribute wajib diisi jika :other bernilai :value.',
+    'required_unless' => ':attribute wajib diisi kecuali :other bernilai :values.',
+    'string' => ':attribute harus berupa teks.',
+    'unique' => ':attribute sudah terdaftar.',
+    'attributes' => [
+        'name' => 'nama',
+        'nama' => 'nama',
+        'email' => 'email',
+        'no_telp' => 'nomor telepon',
+        'password' => 'kata sandi',
+        'role' => 'role',
+        'poin' => 'poin',
+        'status_member' => 'level member',
+        'tanggal' => 'tanggal',
+        'tanggal_lahir' => 'tanggal lahir',
+        'nama_bahan' => 'nama bahan',
+        'kategori' => 'kategori',
+        'jumlah' => 'jumlah',
+        'satuan' => 'satuan',
+        'harga_total' => 'total harga',
+        'jenis' => 'jenis',
+        'isi' => 'isi',
+    ],
+];

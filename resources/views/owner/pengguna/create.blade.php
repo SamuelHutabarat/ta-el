@@ -10,7 +10,7 @@
                 <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Daftar Pengguna
             </a>
             <h2 class="fw-bold mt-2 mb-1" style="font-family: 'Playfair Display', serif;">Tambah Pengguna Baru</h2>
-            <p class="text-muted-coffee">Buat akun login sistem baru untuk Owner, Barista, atau Member Pelanggan.</p>
+            <p class="text-muted-coffee">Buat akun login untuk Owner, Kasir, atau Member Pelanggan.</p>
         </div>
     </div>
 
@@ -26,7 +26,7 @@
                     <!-- Name -->
                     <div class="col-12 col-md-6">
                         <label for="name" class="form-label form-label-coffee">Nama Lengkap Pengguna <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control form-control-coffee @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" placeholder="Contoh: Rian Barista" required>
+                        <input type="text" class="form-control form-control-coffee @error('name') is-invalid @enderror" id="name" name="name" value="{{ old('name') }}" placeholder="Contoh: Rian Pratama" required>
                         @error('name')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
@@ -34,9 +34,18 @@
 
                     <!-- Email -->
                     <div class="col-12 col-md-6">
-                        <label for="email" class="form-label form-label-coffee">Alamat Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control form-control-coffee @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Contoh: rian@kopitkp.com" required>
+                        <label for="email" class="form-label form-label-coffee">Alamat Email (wajib untuk Owner &amp; Kasir)</label>
+                        <input type="email" class="form-control form-control-coffee @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email') }}" placeholder="Contoh: rian@kopitkp.com">
                         @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <!-- No. Telepon -->
+                    <div class="col-12 col-md-6">
+                        <label for="no_telp" class="form-label form-label-coffee">No. Telepon (wajib untuk Pelanggan)</label>
+                        <input type="text" class="form-control form-control-coffee @error('no_telp') is-invalid @enderror" id="no_telp" name="no_telp" value="{{ old('no_telp') }}" placeholder="Contoh: 081234567890">
+                        @error('no_telp')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
@@ -47,14 +56,14 @@
                         <select class="form-select form-control-coffee @error('role') is-invalid @enderror" id="role" name="role" required>
                             <option value="" disabled selected>Pilih Role...</option>
                             <option value="owner" {{ old('role') === 'owner' ? 'selected' : '' }}>Owner (Pemilik Toko)</option>
-                            <option value="barista" {{ old('role') === 'barista' ? 'selected' : '' }}>Kasir / Barista</option>
+                            <option value="kasir" {{ old('role') === 'kasir' ? 'selected' : '' }}>Kasir</option>
                             <option value="pelanggan" {{ old('role') === 'pelanggan' ? 'selected' : '' }}>Pelanggan (Member CRM)</option>
                         </select>
                         @error('role')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                         <div class="form-text text-muted-coffee mt-1" style="font-size: 0.8rem;">
-                            * Catatan: Jika memilih role Pelanggan, sistem akan otomatis membuat profil member kosong dan loyalitas baru.
+                            * Catatan: Role Pelanggan wajib mengisi nomor telepon (dipakai untuk login) dan otomatis dibuatkan profil member.
                         </div>
                     </div>
 

@@ -10,7 +10,7 @@
                 <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Daftar Promo
             </a>
             <h2 class="fw-bold mt-2 mb-1" style="font-family: 'Playfair Display', serif;">Edit Promosi</h2>
-            <p class="text-muted-coffee">Perbarui aturan promosi dan voucher loyalitas Kopi TKP.</p>
+            <p class="text-muted-coffee">Perbarui aturan promosi dan voucher reward Kopi TKP.</p>
         </div>
     </div>
 
@@ -80,7 +80,7 @@
 
                     <!-- Points Needed for Swapping -->
                     <div class="col-12 col-md-6">
-                        <label for="poin_dibutuhkan" class="form-label form-label-coffee">Poin Loyalitas yang Dibutuhkan</label>
+                        <label for="poin_dibutuhkan" class="form-label form-label-coffee">Poin Reward yang Dibutuhkan</label>
                         <div class="input-group">
                             <span class="input-group-text bg-dark border-warning text-info fw-bold"><i class="fa-solid fa-coins"></i></span>
                             <input type="number" class="form-control form-control-coffee @error('poin_dibutuhkan') is-invalid @enderror" id="poin_dibutuhkan" name="poin_dibutuhkan" value="{{ old('poin_dibutuhkan', $promosi->poin_dibutuhkan) }}">

@@ -7,7 +7,7 @@
     <div class="row mb-4 align-items-center">
         <div class="col-12 col-md-6">
             <h2 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Kelola Program Promosi & Voucher</h2>
-            <p class="text-muted-coffee">Buat kupon diskon, promosi khusus gajian, dan penukaran poin reward loyalitas.</p>
+            <p class="text-muted-coffee">Buat kupon diskon, promosi khusus gajian, dan penukaran poin reward.</p>
         </div>
         <div class="col-12 col-md-6 text-md-end mt-3 mt-md-0">
             <a href="{{ route('owner.promosi.create') }}" class="btn btn-gold">

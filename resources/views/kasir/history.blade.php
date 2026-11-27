@@ -1,6 +1,6 @@
 @extends('layouts.crm')
 
-@section('title', 'Riwayat Transaksi - Barista')
+@section('title', 'Riwayat Transaksi - Kasir')
 
 @section('content')
 <div class="container-fluid p-0">
@@ -55,7 +55,7 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <a href="{{ route('barista.transaksi.show', $t->id) }}" class="btn btn-sm btn-outline-gold py-1.5 px-3">
+                                    <a href="{{ route('kasir.transaksi.show', $t->id) }}" class="btn btn-sm btn-outline-gold py-1.5 px-3">
                                         <i class="fa-solid fa-eye me-1"></i> Detail
                                     </a>
                                 </td>

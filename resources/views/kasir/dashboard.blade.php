@@ -1,13 +1,13 @@
 @extends('layouts.crm')
 
-@section('title', 'Dashboard Barista')
+@section('title', 'Dashboard Kasir')
 
 @section('content')
 <div class="container-fluid p-0">
     <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
-            <h2 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Dashboard Barista & Kasir</h2>
+            <h2 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Dashboard Kasir</h2>
             <p class="text-muted-coffee">Selamat bekerja! Kelola pesanan pelanggan dan catat penjualan hari ini.</p>
         </div>
     </div>
@@ -17,13 +17,13 @@
         <!-- New POS Checkout -->
         <div class="col-12 col-md-4">
             <div class="card-coffee h-100 border-warning" style="background: linear-gradient(135deg, rgba(200, 150, 62, 0.1) 0%, rgba(31, 20, 18, 0.9) 100%); overflow: hidden;">
-                <img src="{{ asset('images/barista_pos_banner.png') }}" class="card-img-top object-fit-cover" style="height: 140px; border-bottom: 1px solid rgba(200, 150, 62, 0.2);" alt="POS Kasir Banner">
+                <img src="{{ asset('images/kasir_pos_banner.jpg') }}" class="card-img-top object-fit-cover" style="height: 140px; border-bottom: 1px solid rgba(200, 150, 62, 0.2);" alt="POS Kasir Banner">
                 <div class="card-coffee-body d-flex flex-column justify-content-between p-4">
                     <div>
                         <h4 class="fw-bold text-warning mb-2"><i class="fa-solid fa-cash-register me-2"></i> POS Kasir</h4>
                         <p class="text-muted-coffee" style="font-size: 0.9rem;">Buka layar mesin kasir baru untuk melayani order, input member, hitung poin, dan proses diskon.</p>
                     </div>
-                    <a href="{{ route('barista.transaksi.create') }}" class="btn btn-gold w-100 mt-3">
+                    <a href="{{ route('kasir.transaksi.create') }}" class="btn btn-gold w-100 mt-3">
                         <i class="fa-solid fa-cart-plus me-1"></i> Buka Kasir Baru
                     </a>
                 </div>
@@ -61,11 +61,11 @@
         </div>
     </div>
 
-    <!-- Recent Orders by this Barista -->
+    <!-- Recent Orders by this Kasir -->
     <div class="card-coffee">
         <div class="card-coffee-header d-flex justify-content-between align-items-center">
             <h5 class="m-0 fw-bold"><i class="fa-solid fa-clock-rotate-left me-2 text-warning"></i>Transaksi yang Anda Proses Baru-baru Ini</h5>
-            <a href="{{ route('barista.transaksi.index') }}" class="btn btn-sm btn-outline-gold py-1 px-3">Lihat Riwayat</a>
+            <a href="{{ route('kasir.transaksi.index') }}" class="btn btn-sm btn-outline-gold py-1 px-3">Lihat Riwayat</a>
         </div>
         <div class="card-coffee-body p-0">
             <div class="table-responsive">
@@ -91,7 +91,7 @@
                                 <td class="text-danger fw-bold">-Rp {{ number_format($rt->diskon, 0, ',', '.') }}</td>
                                 <td class="text-success fw-bold">Rp {{ number_format($rt->total_akhir, 0, ',', '.') }}</td>
                                 <td>
-                                    <a href="{{ route('barista.transaksi.show', $rt->id) }}" class="btn btn-sm btn-outline-gold py-1 px-3">
+                                    <a href="{{ route('kasir.transaksi.show', $rt->id) }}" class="btn btn-sm btn-outline-gold py-1 px-3">
                                         <i class="fa-solid fa-eye me-1"></i> Detail
                                     </a>
                                 </td>

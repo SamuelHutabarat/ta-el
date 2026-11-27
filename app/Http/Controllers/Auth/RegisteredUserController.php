@@ -3,7 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Pelanggan;
 use App\Models\User;
+use App\Support\Telepon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -24,48 +26,30 @@ class RegisteredUserController extends Controller
     }
 
     /**
-     * Handle an incoming registration request.
+     * Pendaftaran member: cukup nama lengkap dan nomor telepon (tanpa email & alamat).
      *
      * @throws ValidationException
      */
     public function store(Request $request): RedirectResponse
     {
+        $request->merge(['no_telp' => Telepon::normalisasi($request->input('no_telp'))]);
+
         $request->validate([
             'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
+            'no_telp' => ['required', 'string', 'max:20', 'unique:'.User::class.',no_telp'],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
         $user = User::create([
             'name' => $request->name,
-            'email' => $request->email,
+            'email' => null,
+            'no_telp' => $request->no_telp,
             'password' => Hash::make($request->password),
             'role' => 'pelanggan',
         ]);
 
-        // Create associated Pelanggan profile
-        $latestPelanggan = \App\Models\Pelanggan::orderBy('id', 'desc')->first();
-        $nextNum = $latestPelanggan ? ((int)substr($latestPelanggan->kode_pelanggan, 4)) + 1 : 1;
-        $kode = 'PLG-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
-
-        $pelanggan = \App\Models\Pelanggan::create([
-            'user_id' => $user->id,
-            'kode_pelanggan' => $kode,
-            'nama' => $user->name,
-            'no_telp' => $request->no_telp ?? '-',
-            'alamat' => $request->alamat ?? '-',
-            'poin' => 0,
-            'status_member' => 'Bronze',
-        ]);
-
-        // Create associated LoyalitasPelanggan record
-        \App\Models\LoyalitasPelanggan::create([
-            'pelanggan_id' => $pelanggan->id,
-            'total_akumulasi_transaksi' => 0,
-            'level_member' => 'Bronze',
-            'diskon_khusus' => 0,
-            'tanggal_bergabung' => \Carbon\Carbon::now(),
-        ]);
+        // Profil member: tautkan ke data offline jika nomornya sudah pernah didaftarkan kasir
+        Pelanggan::buatUntukAkun($user);
 
         event(new Registered($user));
 

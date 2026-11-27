@@ -2,16 +2,17 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
+use App\Models\BelanjaBahan;
+use App\Models\DetailTransaksi;
+use App\Models\KritikSaran;
 use App\Models\Pelanggan;
 use App\Models\Produk;
 use App\Models\Promosi;
 use App\Models\Transaksi;
-use App\Models\DetailTransaksi;
-use App\Models\LoyalitasPelanggan;
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
 
 class DatabaseSeeder extends Seeder
 {
@@ -20,180 +21,55 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Seed Users (Owner, Barista, Pelanggan)
-        $ownerUser = User::create([
+        $password = Hash::make('password');
+
+        // 1. Akun staf: 1 owner dan 2 kasir (tidak pernah menjadi member)
+        $owner = User::create([
             'name' => 'Owner TKP',
             'email' => 'owner@tkp.com',
-            'password' => Hash::make('password'),
+            'password' => $password,
             'role' => 'owner',
         ]);
 
-        $baristaUser = User::create([
-            'name' => 'Andi Barista',
-            'email' => 'barista@tkp.com',
-            'password' => Hash::make('password'),
-            'role' => 'barista',
-        ]);
+        $kasirs = [
+            User::create(['name' => 'Owit', 'email' => 'owit@tkp.com', 'password' => $password, 'role' => 'kasir']),
+            User::create(['name' => 'Tantri', 'email' => 'tantri@tkp.com', 'password' => $password, 'role' => 'kasir']),
+        ];
 
-        // Gold Member 1 (As documented in README.md)
-        $budiUser = User::create([
-            'name' => 'Budi Sudrajat',
-            'email' => 'budi@tkp.com',
-            'password' => Hash::make('password'),
-            'role' => 'pelanggan',
-        ]);
+        // 2. Member: login memakai nomor telepon (tanpa email)
+        $daftarMember = [
+            ['nama' => 'Budi Sudrajat', 'no_telp' => '081234567890', 'status' => 'Gold', 'poin' => 120, 'total' => 1500000, 'gabung' => Carbon::now()->subMonths(6), 'lahir' => Carbon::now()->addDays(5)->subYears(28)],
+            ['nama' => 'Samuel', 'no_telp' => '081298765432', 'status' => 'Gold', 'poin' => 95, 'total' => 1250000, 'gabung' => Carbon::now()->subMonths(5), 'lahir' => Carbon::now()->addDays(60)->subYears(30)],
+            ['nama' => 'Siti Aminah', 'no_telp' => '081987654321', 'status' => 'Silver', 'poin' => 45, 'total' => 650000, 'gabung' => Carbon::now()->subMonths(3), 'lahir' => Carbon::now()->addDays(20)->subYears(31)],
+            ['nama' => 'Dewi Sartika', 'no_telp' => '087812349999', 'status' => 'Silver', 'poin' => 55, 'total' => 580000, 'gabung' => Carbon::now()->subMonths(2), 'lahir' => Carbon::now()->addDays(10)->subYears(26)],
+            ['nama' => 'Rudi Hermawan', 'no_telp' => '08561234567', 'status' => 'Bronze', 'poin' => 15, 'total' => 180000, 'gabung' => Carbon::now()->subMonth(), 'lahir' => null],
+            ['nama' => 'Ahmad Dani', 'no_telp' => '081377889900', 'status' => 'Bronze', 'poin' => 10, 'total' => 120000, 'gabung' => Carbon::now()->subWeeks(2), 'lahir' => null],
+        ];
 
-        // Gold Member 2 (As documented on login badge)
-        $samuelUser = User::create([
-            'name' => 'Samuel',
-            'email' => 'samuel@tkp.com',
-            'password' => Hash::make('password'),
-            'role' => 'pelanggan',
-        ]);
+        $allMembers = [];
+        foreach ($daftarMember as $i => $m) {
+            $user = User::create([
+                'name' => $m['nama'],
+                'email' => null,
+                'no_telp' => $m['no_telp'],
+                'password' => $password,
+                'role' => 'pelanggan',
+            ]);
 
-        // Silver Member 1
-        $sitiUser = User::create([
-            'name' => 'Siti Aminah',
-            'email' => 'siti@tkp.com',
-            'password' => Hash::make('password'),
-            'role' => 'pelanggan',
-        ]);
+            $allMembers[] = Pelanggan::create([
+                'user_id' => $user->id,
+                'kode_pelanggan' => 'PLG-'.str_pad((string) ($i + 1), 4, '0', STR_PAD_LEFT),
+                'nama' => $m['nama'],
+                'no_telp' => $m['no_telp'],
+                'poin' => $m['poin'],
+                'status_member' => $m['status'],
+                'total_belanja' => $m['total'],
+                'tanggal_lahir' => $m['lahir']?->toDateString(),
+                'tanggal_bergabung' => $m['gabung']->toDateString(),
+            ]);
+        }
 
-        // Silver Member 2
-        $dewiUser = User::create([
-            'name' => 'Dewi Sartika',
-            'email' => 'dewi@tkp.com',
-            'password' => Hash::make('password'),
-            'role' => 'pelanggan',
-        ]);
-
-        // Bronze Member 1
-        $rudiUser = User::create([
-            'name' => 'Rudi Hermawan',
-            'email' => 'rudi@tkp.com',
-            'password' => Hash::make('password'),
-            'role' => 'pelanggan',
-        ]);
-
-        // Bronze Member 2
-        $ahmadUser = User::create([
-            'name' => 'Ahmad Dani',
-            'email' => 'ahmad@tkp.com',
-            'password' => Hash::make('password'),
-            'role' => 'pelanggan',
-        ]);
-
-        // 2. Seed Pelanggan profiles
-        $budi = Pelanggan::create([
-            'user_id' => $budiUser->id,
-            'kode_pelanggan' => 'PLG-0001',
-            'nama' => 'Budi Sudrajat',
-            'no_telp' => '081234567890',
-            'alamat' => 'Jl. Mawar No. 12, Jakarta',
-            'poin' => 120,
-            'status_member' => 'Gold',
-        ]);
-
-        $samuel = Pelanggan::create([
-            'user_id' => $samuelUser->id,
-            'kode_pelanggan' => 'PLG-0002',
-            'nama' => 'Samuel',
-            'no_telp' => '081298765432',
-            'alamat' => 'Jl. Senopati No. 44, Jakarta',
-            'poin' => 95,
-            'status_member' => 'Gold',
-        ]);
-
-        $siti = Pelanggan::create([
-            'user_id' => $sitiUser->id,
-            'kode_pelanggan' => 'PLG-0003',
-            'nama' => 'Siti Aminah',
-            'no_telp' => '081987654321',
-            'alamat' => 'Jl. Melati No. 5, Bandung',
-            'poin' => 45,
-            'status_member' => 'Silver',
-        ]);
-
-        $dewi = Pelanggan::create([
-            'user_id' => $dewiUser->id,
-            'kode_pelanggan' => 'PLG-0004',
-            'nama' => 'Dewi Sartika',
-            'no_telp' => '087812349999',
-            'alamat' => 'Jl. Dago No. 102, Bandung',
-            'poin' => 55,
-            'status_member' => 'Silver',
-        ]);
-
-        $rudi = Pelanggan::create([
-            'user_id' => $rudiUser->id,
-            'kode_pelanggan' => 'PLG-0005',
-            'nama' => 'Rudi Hermawan',
-            'no_telp' => '08561234567',
-            'alamat' => 'Jl. Kenanga No. 88, Bogor',
-            'poin' => 15,
-            'status_member' => 'Bronze',
-        ]);
-
-        $ahmad = Pelanggan::create([
-            'user_id' => $ahmadUser->id,
-            'kode_pelanggan' => 'PLG-0006',
-            'nama' => 'Ahmad Dani',
-            'no_telp' => '081377889900',
-            'alamat' => 'Jl. Cibubur Raya No. 17, Depok',
-            'poin' => 10,
-            'status_member' => 'Bronze',
-        ]);
-
-        // 3. Seed LoyalitasPelanggan
-        LoyalitasPelanggan::create([
-            'pelanggan_id' => $budi->id,
-            'total_akumulasi_transaksi' => 1500000.00,
-            'level_member' => 'Gold',
-            'diskon_khusus' => 10,
-            'tanggal_bergabung' => Carbon::now()->subMonths(6),
-        ]);
-
-        LoyalitasPelanggan::create([
-            'pelanggan_id' => $samuel->id,
-            'total_akumulasi_transaksi' => 1250000.00,
-            'level_member' => 'Gold',
-            'diskon_khusus' => 10,
-            'tanggal_bergabung' => Carbon::now()->subMonths(5),
-        ]);
-
-        LoyalitasPelanggan::create([
-            'pelanggan_id' => $siti->id,
-            'total_akumulasi_transaksi' => 650000.00,
-            'level_member' => 'Silver',
-            'diskon_khusus' => 5,
-            'tanggal_bergabung' => Carbon::now()->subMonths(3),
-        ]);
-
-        LoyalitasPelanggan::create([
-            'pelanggan_id' => $dewi->id,
-            'total_akumulasi_transaksi' => 580000.00,
-            'level_member' => 'Silver',
-            'diskon_khusus' => 5,
-            'tanggal_bergabung' => Carbon::now()->subMonths(2),
-        ]);
-
-        LoyalitasPelanggan::create([
-            'pelanggan_id' => $rudi->id,
-            'total_akumulasi_transaksi' => 180000.00,
-            'level_member' => 'Bronze',
-            'diskon_khusus' => 0,
-            'tanggal_bergabung' => Carbon::now()->subMonth(),
-        ]);
-
-        LoyalitasPelanggan::create([
-            'pelanggan_id' => $ahmad->id,
-            'total_akumulasi_transaksi' => 120000.00,
-            'level_member' => 'Bronze',
-            'diskon_khusus' => 0,
-            'tanggal_bergabung' => Carbon::now()->subWeeks(2),
-        ]);
-
-        // 4. Seed Produk
+        // 3. Seed Produk
         $produkData = [
             [
                 'nama_produk' => 'Espresso Double',
@@ -282,7 +158,8 @@ class DatabaseSeeder extends Seeder
             $produkModels[] = Produk::create($data);
         }
 
-        // 5. Seed Promosi
+
+        // 4. Seed Promosi
         Promosi::create([
             'nama_promo' => 'Diskon Awal Tahun TKP',
             'kode_promo' => 'TKPAWAL10',
@@ -299,7 +176,7 @@ class DatabaseSeeder extends Seeder
         Promosi::create([
             'nama_promo' => 'Klaim Kopi Susu Free',
             'kode_promo' => 'TKPFREEPOIN',
-            'deskripsi' => 'Tukarkan 50 poin loyalitas kamu dengan 1 cup Kopi Susu TKP gratis!',
+            'deskripsi' => 'Tukarkan 50 poin reward kamu dengan 1 cup Kopi Susu TKP gratis!',
             'diskon_persen' => 0,
             'diskon_nominal' => 22000.00,
             'minimal_transaksi' => 22000.00,
@@ -322,29 +199,30 @@ class DatabaseSeeder extends Seeder
             'status' => true,
         ]);
 
-        // 6. Seed Transaksi and DetailTransaksi up to TODAY
-        $allMembers = [$budi, $samuel, $siti, $dewi, $rudi, $ahmad];
-        $paymentMethods = ['Cash', 'QRIS'];
 
+        // 5. Seed Transaksi and DetailTransaksi up to TODAY (kanal Offline = datang langsung, Online = pesanan online)
+        $paymentMethods = ['Cash', 'QRIS'];
         $trxCounter = 1;
 
         // Generate transactions for the last 30 days including today
         for ($i = 29; $i >= 0; $i--) {
             $baseDay = Carbon::now()->subDays($i);
-            
+
             // 2 to 5 transactions per day
             $transCount = rand(2, 5);
             for ($t = 0; $t < $transCount; $t++) {
                 $trxTime = $baseDay->copy()->setHour(rand(8, 21))->setMinute(rand(0, 59))->setSecond(rand(0, 59));
-                
+
                 // 70% chance of registered member, 30% guest walk-in
                 $pel = (rand(1, 10) <= 7) ? $allMembers[array_rand($allMembers)] : null;
                 $payment = $paymentMethods[array_rand($paymentMethods)];
-                
+                $sumber = rand(1, 4) === 1 ? 'Online' : 'Offline';
+                $kasir = $kasirs[$trxCounter % 2];
+
                 // Select 1 to 3 random products
                 $itemsCount = rand(1, 3);
                 $selectedProducts = array_rand($produkModels, $itemsCount);
-                if (!is_array($selectedProducts)) {
+                if (! is_array($selectedProducts)) {
                     $selectedProducts = [$selectedProducts];
                 }
 
@@ -365,16 +243,11 @@ class DatabaseSeeder extends Seeder
                     ];
                 }
 
-                // Check discount
+                // Member discount by tier + optional points redemption
                 $diskon = 0;
                 $poinDigunakan = 0;
                 if ($pel) {
-                    $level = $pel->status_member;
-                    if ($level === 'Gold') {
-                        $diskon = $totalHarga * 0.10; // 10%
-                    } elseif ($level === 'Silver') {
-                        $diskon = $totalHarga * 0.05; // 5%
-                    }
+                    $diskon = $totalHarga * ($pel->diskonPersen() / 100);
 
                     if (rand(1, 10) > 8 && $pel->poin >= 50) {
                         $poinDigunakan = 50;
@@ -402,25 +275,27 @@ class DatabaseSeeder extends Seeder
                     $kembalian = 0;
                 }
 
-                $poinDapat = floor($totalAkhir / 10000);
-                $trxCode = 'TRX-' . $trxTime->format('Ymd') . '-' . str_pad($trxCounter++, 4, '0', STR_PAD_LEFT);
+                $poinDapat = floor($totalAkhir / config('crm.rupiah_per_poin.'.$sumber));
+                $trxCode = 'TRX-'.$trxTime->format('Ymd').'-'.str_pad((string) $trxCounter++, 4, '0', STR_PAD_LEFT);
 
                 $transaksi = Transaksi::create([
                     'kode_transaksi' => $trxCode,
                     'pelanggan_id' => $pel ? $pel->id : null,
-                    'user_id' => $baristaUser->id,
+                    'user_id' => $kasir->id,
                     'total_harga' => $totalHarga,
                     'diskon' => $diskon,
                     'total_akhir' => $totalAkhir,
                     'total_bayar' => $totalBayar,
                     'kembalian' => $kembalian,
                     'metode_pembayaran' => $payment,
+                    'sumber_transaksi' => $sumber,
                     'status_pembayaran' => 'Lunas',
                     'poin_dapat' => $poinDapat,
                     'poin_digunakan' => $poinDigunakan,
-                    'created_at' => $trxTime,
-                    'updated_at' => $trxTime,
                 ]);
+
+                // created_at tidak ikut create() (bukan fillable), jadi diisi setelah disimpan.
+                $transaksi->forceFill(['created_at' => $trxTime, 'updated_at' => $trxTime])->save();
 
                 foreach ($details as $det) {
                     $det['transaksi_id'] = $transaksi->id;
@@ -430,5 +305,37 @@ class DatabaseSeeder extends Seeder
                 }
             }
         }
+
+        // 6. Seed modal belanja bahan (8 minggu terakhir)
+        $belanjaRutin = [
+            ['Biji Kopi Arabika Blend', 'Biji Kopi', 2, 'kg', 240000, 7],
+            ['Susu Full Cream', 'Susu & Krimer', 12, 'liter', 204000, 7],
+            ['Krimer Nabati', 'Susu & Krimer', 4, 'liter', 150000, 14],
+            ['Gula Aren Cair', 'Sirup & Gula', 3, 'liter', 96000, 14],
+            ['Bubuk Matcha Jepang', 'Bahan Makanan', 0.5, 'kg', 160000, 21],
+            ['Cokelat Blok Premium', 'Bahan Makanan', 1, 'kg', 150000, 21],
+            ['Mentega & Tepung (Croissant)', 'Bahan Makanan', 2, 'paket', 275000, 14],
+            ['Kentang Beku', 'Bahan Makanan', 3, 'kg', 90000, 28],
+            ['Cup & Tutup Takeaway', 'Kemasan', 1, 'pak', 85000, 28],
+        ];
+
+        foreach ($belanjaRutin as [$nama, $kategori, $jumlah, $satuan, $harga, $intervalHari]) {
+            for ($offset = 0; $offset <= 56; $offset += $intervalHari) {
+                BelanjaBahan::create([
+                    'tanggal' => Carbon::today()->subDays(56 - $offset)->toDateString(),
+                    'nama_bahan' => $nama,
+                    'kategori' => $kategori,
+                    'jumlah' => $jumlah,
+                    'satuan' => $satuan,
+                    'harga_total' => $harga,
+                    'user_id' => $owner->id,
+                ]);
+            }
+        }
+
+        // 7. Seed kritik & saran
+        KritikSaran::create(['pelanggan_id' => $allMembers[0]->id, 'jenis' => 'Saran', 'isi' => 'Mohon tambahkan pilihan susu oat untuk semua menu kopi.']);
+        KritikSaran::create(['pelanggan_id' => $allMembers[2]->id, 'jenis' => 'Kritik', 'isi' => 'Antrian saat jam makan siang cukup panjang, mohon kasir ditambah.']);
+        KritikSaran::create(['pelanggan_id' => null, 'jenis' => 'Saran', 'isi' => 'Kursi di area luar sebaiknya diberi peneduh.']);
     }
 }

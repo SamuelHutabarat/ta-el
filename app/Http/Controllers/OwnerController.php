@@ -2,15 +2,18 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Pelanggan;
-use App\Models\Transaksi;
 use App\Models\Promosi;
-use App\Models\LoyalitasPelanggan;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Models\Transaksi;
+use App\Models\User;
+use App\Support\Periode;
+use App\Support\RingkasanPeriode;
+use App\Support\Telepon;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
 
 class OwnerController extends Controller
 {
@@ -22,7 +25,7 @@ class OwnerController extends Controller
         // 1. Core KPIs
         $totalSales = Transaksi::where('status_pembayaran', 'Lunas')->sum('total_akhir');
         $totalOrders = Transaksi::count();
-        $totalMembers = Pelanggan::count();
+        $totalMembers = Pelanggan::member()->count();
         $activePromos = Promosi::where('status', true)
             ->where('tanggal_selesai', '>=', Carbon::today())
             ->count();
@@ -62,8 +65,8 @@ class OwnerController extends Controller
 
         $chartPeriod = $anchor->copy()->subDays(6)->isoFormat('D MMM Y') . ' - ' . $anchor->isoFormat('D MMM Y');
 
-        // 3. Loyalty Member Distribution (Bronze, Silver, Gold)
-        $memberLevels = Pelanggan::select('status_member', DB::raw('count(*) as count'))
+        // 3. Distribusi level member (Bronze, Silver, Gold)
+        $memberLevels = Pelanggan::member()->select('status_member', DB::raw('count(*) as count'))
             ->groupBy('status_member')
             ->get();
         
@@ -90,6 +93,7 @@ class OwnerController extends Controller
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
+        $hariPenting = Pelanggan::hariPenting(Carbon::now(), 30);
 
         return view('owner.dashboard', compact(
             'totalSales',
@@ -102,7 +106,8 @@ class OwnerController extends Controller
             'levelLabels',
             'levelCounts',
             'bestSellers',
-            'recentTransactions'
+            'recentTransactions',
+            'hariPenting'
         ));
     }
 
@@ -124,47 +129,27 @@ class OwnerController extends Controller
     }
 
     /**
-     * Store new user.
+     * Store new user. Akun pelanggan cukup nama + nomor telepon; owner & kasir wajib email.
      */
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+        $request->merge(['no_telp' => Telepon::normalisasi($request->input('no_telp'))]);
+
+        $data = $request->validate($this->aturanPengguna($request, null) + [
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|string|in:owner,barista,pelanggan',
         ]);
 
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
+            'name' => $data['name'],
+            'email' => $data['email'] ?? null,
+            'no_telp' => $data['no_telp'] ?? null,
+            'password' => Hash::make($data['password']),
+            'role' => $data['role'],
         ]);
 
-        // If the role created is a customer (pelanggan), auto-create profile
+        // Akun pelanggan otomatis mendapat profil member; kasir & owner tidak pernah jadi member.
         if ($user->role === 'pelanggan') {
-            $latestPelanggan = Pelanggan::orderBy('id', 'desc')->first();
-            $nextNum = $latestPelanggan ? ((int)substr($latestPelanggan->kode_pelanggan, 4)) + 1 : 1;
-            $kode = 'PLG-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
-
-            $pelanggan = Pelanggan::create([
-                'user_id' => $user->id,
-                'kode_pelanggan' => $kode,
-                'nama' => $user->name,
-                'no_telp' => '-',
-                'alamat' => '-',
-                'poin' => 0,
-                'status_member' => 'Bronze',
-            ]);
-
-            LoyalitasPelanggan::create([
-                'pelanggan_id' => $pelanggan->id,
-                'total_akumulasi_transaksi' => 0,
-                'level_member' => 'Bronze',
-                'diskon_khusus' => 0,
-                'tanggal_bergabung' => Carbon::now(),
-            ]);
+            Pelanggan::buatUntukAkun($user);
         }
 
         return redirect()->route('owner.pengguna.index')->with('success', 'User berhasil ditambahkan.');
@@ -186,27 +171,32 @@ class OwnerController extends Controller
     {
         $user = User::findOrFail($id);
 
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users,email,' . $user->id,
+        $request->merge(['no_telp' => Telepon::normalisasi($request->input('no_telp'))]);
+
+        $data = $request->validate($this->aturanPengguna($request, $user) + [
             'password' => 'nullable|string|min:8|confirmed',
-            'role' => 'required|string|in:owner,barista,pelanggan',
         ]);
 
-        $user->name = $request->name;
-        $user->email = $request->email;
-        $user->role = $request->role;
+        $user->name = $data['name'];
+        $user->email = $data['email'] ?? null;
+        $user->no_telp = $data['no_telp'] ?? null;
+        $user->role = $data['role'];
 
         if ($request->filled('password')) {
-            $user->password = Hash::make($request->password);
+            $user->password = Hash::make($data['password']);
         }
 
         $user->save();
 
-        // Sync pelanggan profile name if exists
-        if ($user->role === 'pelanggan' && $user->pelanggan) {
-            $user->pelanggan->nama = $user->name;
-            $user->pelanggan->save();
+        if ($user->role === 'pelanggan') {
+            $profil = $user->pelanggan ?? Pelanggan::buatUntukAkun($user);
+            $profil->update([
+                'nama' => $user->name,
+                'no_telp' => $user->no_telp ?? $profil->no_telp,
+            ]);
+        } elseif ($user->pelanggan) {
+            // Role bukan pelanggan: profil member dilepas.
+            $user->pelanggan->delete();
         }
 
         return redirect()->route('owner.pengguna.index')->with('success', 'User berhasil diperbarui.');
@@ -229,41 +219,31 @@ class OwnerController extends Controller
     }
 
     /**
-     * Sales reports filtering view.
+     * Laporan penjualan per harian, mingguan, atau bulanan.
      */
     public function laporan(Request $request)
     {
-        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
-        $endDate = $request->get('end_date', Carbon::now()->toDateString());
+        $periode = Periode::dariRequest($request, 'bulanan');
+        $transaksi = $this->transaksiPeriode($periode);
+        $ringkasan = RingkasanPeriode::hitung($periode['mulai'], $periode['selesai']);
+        $rincian = RingkasanPeriode::rincian($periode['tipe'], $periode['mulai'], $periode['selesai']);
 
-        $transaksi = Transaksi::with(['pelanggan', 'user'])
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        $totalHarga = $transaksi->sum('total_harga');
-        $totalDiskon = $transaksi->sum('diskon');
-        $totalRevenue = $transaksi->sum('total_akhir');
-
-        return view('owner.laporan.index', compact('transaksi', 'startDate', 'endDate', 'totalHarga', 'totalDiskon', 'totalRevenue'));
+        return view('owner.laporan.index', compact('transaksi', 'periode', 'ringkasan', 'rincian'));
     }
 
     /**
-     * Export sales report to Excel/CSV.
+     * Export sales report to CSV (dibuka di Excel).
      */
     public function exportExcel(Request $request)
     {
-        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
-        $endDate = $request->get('end_date', Carbon::now()->toDateString());
+        $periode = Periode::dariRequest($request, 'bulanan');
+        $transaksi = $this->transaksiPeriode($periode);
+        $ringkasan = RingkasanPeriode::hitung($periode['mulai'], $periode['selesai']);
 
-        $transaksi = Transaksi::with(['pelanggan', 'user'])
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->orderBy('created_at', 'desc')
-            ->get();
+        $fileName = 'laporan-penjualan-kopi-tkp-'.$periode['tipe'].'-'
+            .$periode['mulai']->format('Y-m-d').'-to-'.$periode['selesai']->format('Y-m-d').'.csv';
 
-        $fileName = "laporan-penjualan-kopi-tkp-" . $startDate . "-to-" . $endDate . ".csv";
-
-        return response()->streamDownload(function () use ($transaksi, $startDate, $endDate) {
+        return response()->streamDownload(function () use ($transaksi, $periode, $ringkasan) {
             $output = fopen('php://output', 'w');
 
             // UTF-8 BOM for Microsoft Excel compatibility
@@ -271,7 +251,11 @@ class OwnerController extends Controller
 
             // Header information
             fputcsv($output, ['Laporan Penjualan Kopi Tempat Kamu Pulang (TKP)']);
-            fputcsv($output, ['Periode:', $startDate . ' s/d ' . $endDate]);
+            fputcsv($output, ['Periode:', Periode::TIPE[$periode['tipe']], $periode['label']]);
+            fputcsv($output, ['Omset (Rp):', $ringkasan['omset']]);
+            fputcsv($output, ['Diskon (Rp):', $ringkasan['diskon']]);
+            fputcsv($output, ['Modal belanja bahan (Rp):', $ringkasan['modal']]);
+            fputcsv($output, ['Selisih omset - modal (Rp):', $ringkasan['laba']]);
             fputcsv($output, []); // Empty row
 
             // Table headers
@@ -279,7 +263,8 @@ class OwnerController extends Controller
                 'Kode Transaksi',
                 'Tanggal & Waktu',
                 'Pelanggan',
-                'Kasir / Barista',
+                'Kasir',
+                'Sumber',
                 'Total Harga (Rp)',
                 'Diskon (Rp)',
                 'Total Akhir (Rp)',
@@ -293,6 +278,7 @@ class OwnerController extends Controller
                     $t->created_at->format('Y-m-d H:i:s'),
                     $t->pelanggan ? $t->pelanggan->nama : 'Guest Walk-in',
                     $t->user ? $t->user->name : 'System',
+                    $t->sumber_transaksi === 'Online' ? 'Online' : 'Datang Langsung',
                     $t->total_harga,
                     $t->diskon,
                     $t->total_akhir,
@@ -313,26 +299,43 @@ class OwnerController extends Controller
      */
     public function exportPdf(Request $request)
     {
-        $startDate = $request->get('start_date', Carbon::now()->startOfMonth()->toDateString());
-        $endDate = $request->get('end_date', Carbon::now()->toDateString());
+        $periode = Periode::dariRequest($request, 'bulanan');
+        $transaksi = $this->transaksiPeriode($periode);
+        $ringkasan = RingkasanPeriode::hitung($periode['mulai'], $periode['selesai']);
+        $rincian = RingkasanPeriode::rincian($periode['tipe'], $periode['mulai'], $periode['selesai']);
 
-        $transaksi = Transaksi::with(['pelanggan', 'user'])
-            ->whereBetween('created_at', [$startDate . ' 00:00:00', $endDate . ' 23:59:59'])
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return view('owner.laporan.pdf', compact('transaksi', 'startDate', 'endDate'));
+        return view('owner.laporan.pdf', compact('transaksi', 'periode', 'ringkasan', 'rincian'));
     }
 
     /**
-     * Monitoring loyalty programs & member profiles.
+     * Transaksi lunas dalam rentang periode, terbaru di atas.
      */
-    public function loyalitas()
+    private function transaksiPeriode(array $periode)
     {
-        $loyalitas = LoyalitasPelanggan::with('pelanggan')
-            ->orderBy('total_akumulasi_transaksi', 'desc')
+        return Transaksi::with(['pelanggan', 'user'])
+            ->dalamPeriode($periode['mulai'], $periode['selesai'])
+            ->orderBy('created_at', 'desc')
             ->get();
+    }
 
-        return view('owner.loyalitas.index', compact('loyalitas'));
+    /**
+     * Aturan validasi pengguna. Akun pelanggan: nomor telepon wajib (untuk login), email opsional.
+     * Owner & kasir: email wajib, nomor telepon opsional.
+     */
+    private function aturanPengguna(Request $request, ?User $user): array
+    {
+        $abaikan = $user?->id;
+        $pelanggan = $request->input('role') === 'pelanggan';
+
+        return [
+            'name' => 'required|string|max:255',
+            'role' => ['required', 'string', Rule::in(['owner', 'kasir', 'pelanggan'])],
+            'email' => $pelanggan
+                ? ['nullable', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($abaikan)]
+                : ['required', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($abaikan)],
+            'no_telp' => $pelanggan
+                ? ['required', 'string', 'max:20', Rule::unique('users', 'no_telp')->ignore($abaikan)]
+                : ['nullable', 'string', 'max:20', Rule::unique('users', 'no_telp')->ignore($abaikan)],
+        ];
     }
 }

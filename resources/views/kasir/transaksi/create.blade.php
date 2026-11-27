@@ -239,6 +239,15 @@
                 </div>
             </div>
 
+            <!-- 3b. Sumber Transaksi (menentukan perolehan poin) -->
+            <div class="mb-3">
+                <label for="selectSumber" class="form-label-coffee" style="font-size: 0.85rem;"><i class="fa-solid fa-route me-1"></i> Sumber Transaksi</label>
+                <select class="form-select form-control-coffee py-1.5" id="selectSumber">
+                    <option value="Offline" selected>Datang Langsung (1 poin / Rp {{ number_format(config('crm.rupiah_per_poin.Offline'), 0, ',', '.') }})</option>
+                    <option value="Online">Pesanan Online (1 poin / Rp {{ number_format(config('crm.rupiah_per_poin.Online'), 0, ',', '.') }})</option>
+                </select>
+            </div>
+
             <!-- 4. Payment Calculator -->
             <div class="row g-2 mb-3">
                 <div class="col-6">
@@ -301,6 +310,7 @@
 <script>
     // Raw Promotions array from controller to compute coupon discounts in real-time
     const activePromotions = {!! json_encode($promosi) !!};
+    const poinRate = {!! json_encode(config('crm.rupiah_per_poin')) !!};
 
     $(document).ready(function() {
         let cart = {}; // key: product_id, value: {id, name, price, qty, stock}
@@ -416,6 +426,11 @@
                 $("#chkUsePoints").prop("checked", false);
             }
             
+            recalculateTotals();
+        });
+
+        // Sumber transaksi mengubah perolehan poin
+        $("#selectSumber").change(function() {
             recalculateTotals();
         });
 
@@ -568,7 +583,7 @@
             // Points earned calculation
             let selected = $("#selectPelanggan").find(":selected");
             if (selected.val() && net > 0) {
-                let pointsEarned = Math.floor(net / 10000);
+                let pointsEarned = Math.floor(net / (poinRate[$("#selectSumber").val()] || 10000));
                 $("#valProjectedPoints").text(pointsEarned);
                 $("#pointsProjectedMsg").removeClass("d-none");
             } else {
@@ -644,6 +659,7 @@
                 pelanggan_id: pelangganId,
                 kode_promo: appliedPromo ? appliedPromo.kode_promo : null,
                 poin_digunakan: usePoints,
+                sumber_transaksi: $("#selectSumber").val(),
                 metode_pembayaran: $("#selectPayment").val(),
                 total_bayar: parseFloat($("#numCashTender").val()) || 0,
                 _token: $('meta[name="csrf-token"]').attr('content')
@@ -653,7 +669,7 @@
             $("#btnCheckoutSubmit").prop("disabled", true).html('<i class="fa-solid fa-spinner fa-spin me-2"></i> Memproses...');
 
             $.ajax({
-                url: "{{ route('barista.transaksi.store') }}",
+                url: "{{ route('kasir.transaksi.store') }}",
                 type: "POST",
                 data: JSON.stringify(payload),
                 contentType: "application/json",

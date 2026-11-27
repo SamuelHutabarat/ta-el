@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,10 +22,18 @@ class Transaksi extends Model
         'total_bayar',
         'kembalian',
         'metode_pembayaran',
+        'sumber_transaksi',
         'status_pembayaran',
         'poin_dapat',
         'poin_digunakan',
     ];
+
+    public const SUMBER = ['Offline', 'Online'];
+
+    public function scopeDalamPeriode($query, Carbon $mulai, Carbon $selesai)
+    {
+        return $query->whereBetween('created_at', [$mulai, $selesai]);
+    }
 
     public function pelanggan()
     {

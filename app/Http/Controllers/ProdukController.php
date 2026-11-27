@@ -137,6 +137,6 @@ class ProdukController extends Controller
 
     private function productIndexRoute(): string
     {
-        return auth()->user()?->role === 'barista' ? 'barista.produk' : 'owner.produk.index';
+        return auth()->user()?->role === 'kasir' ? 'kasir.produk' : 'owner.produk.index';
     }
 }

@@ -45,9 +45,17 @@
                     </div>
 
                     <div class="col-12">
-                        <label for="email" class="form-label form-label-coffee">Alamat Email</label>
-                        <input type="email" class="form-control form-control-coffee @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $user->email) }}" required autocomplete="username">
+                        <label for="email" class="form-label form-label-coffee">Alamat Email (opsional)</label>
+                        <input type="email" class="form-control form-control-coffee @error('email') is-invalid @enderror" id="email" name="email" value="{{ old('email', $user->email) }}" autocomplete="username">
                         @error('email')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="col-12">
+                        <label for="no_telp" class="form-label form-label-coffee">No. Telepon (untuk login member)</label>
+                        <input type="text" class="form-control form-control-coffee @error('no_telp') is-invalid @enderror" id="no_telp" name="no_telp" value="{{ old('no_telp', $user->no_telp) }}" placeholder="Contoh: 081234567890">
+                        @error('no_telp')
                             <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>

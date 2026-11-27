@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Penjualan Kopi TKP ({{ $startDate }} s/d {{ $endDate }})</title>
+    <title>Laporan Penjualan Kopi TKP ({{ $periode['label'] }})</title>
     <!-- Bootstrap 5 CSS (needed for table formatting in print) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
@@ -70,13 +70,13 @@
         <div class="report-header">
             <h2>KOPI TEMPAT KAMU PULANG (TKP)</h2>
             <p>Tempat Kamu Pulang Jl. Meruyung | Telp: (022) 1234567</p>
-            <p class="fw-bold" style="font-size: 14px; margin-top: 10px; text-transform: uppercase;">Laporan Realisasi Penjualan & Loyalitas Pelanggan (CRM)</p>
+            <p class="fw-bold" style="font-size: 14px; margin-top: 10px; text-transform: uppercase;">Laporan Penjualan, Modal Belanja &amp; CRM Pelanggan</p>
         </div>
 
         <!-- Meta Info -->
         <div class="row meta-info">
             <div class="col-6">
-                <strong>Periode Tanggal:</strong> {{ \Carbon\Carbon::parse($startDate)->isoFormat('D MMMM Y') }} s/d {{ \Carbon\Carbon::parse($endDate)->isoFormat('D MMMM Y') }}
+                <strong>Periode {{ \App\Support\Periode::TIPE[$periode['tipe']] }}:</strong> {{ $periode['label'] }}
             </div>
             <div class="col-6 text-end">
                 <strong>Tanggal Cetak:</strong> {{ \Carbon\Carbon::now()->isoFormat('D MMMM Y, H:i') }}<br>
@@ -92,7 +92,7 @@
                     <th>Kode Transaksi</th>
                     <th>Tanggal/Waktu</th>
                     <th>Nama Member</th>
-                    <th>Kasir/Barista</th>
+                    <th>Kasir</th>
                     <th>Subtotal</th>
                     <th>Diskon</th>
                     <th>Total Akhir</th>
@@ -137,6 +137,52 @@
             </tbody>
         </table>
 
+        <!-- Rincian per hari / minggu -->
+        @if($rincian->isNotEmpty())
+            <table class="table table-bordered align-middle mt-4">
+                <thead>
+                    <tr>
+                        <th>{{ $periode['tipe'] === 'mingguan' ? 'Hari' : 'Minggu' }}</th>
+                        <th class="text-end">Transaksi</th>
+                        <th class="text-end">Omset</th>
+                        <th class="text-end">Modal Belanja</th>
+                        <th class="text-end">Omset − Modal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($rincian as $baris)
+                        <tr>
+                            <td>{{ $baris['label'] }}</td>
+                            <td class="text-end">{{ $baris['transaksi'] }}</td>
+                            <td class="text-end">Rp {{ number_format($baris['omset'], 0, ',', '.') }}</td>
+                            <td class="text-end">Rp {{ number_format($baris['modal'], 0, ',', '.') }}</td>
+                            <td class="text-end fw-bold">Rp {{ number_format($baris['laba'], 0, ',', '.') }}</td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        @endif
+
+        <!-- Ringkasan Keuangan -->
+        <table class="table table-bordered align-middle mt-4" style="width: 60%; margin-left: auto;">
+            <tr>
+                <td>Omset (transaksi lunas)</td>
+                <td class="text-end fw-bold">Rp {{ number_format($ringkasan['omset'], 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td>Diskon diberikan</td>
+                <td class="text-end">Rp {{ number_format($ringkasan['diskon'], 0, ',', '.') }}</td>
+            </tr>
+            <tr>
+                <td>Modal belanja bahan</td>
+                <td class="text-end">Rp {{ number_format($ringkasan['modal'], 0, ',', '.') }}</td>
+            </tr>
+            <tr class="fw-bold" style="background-color: #f9f9f9;">
+                <td>Selisih omset − modal belanja</td>
+                <td class="text-end">Rp {{ number_format($ringkasan['laba'], 0, ',', '.') }}</td>
+            </tr>
+        </table>
+
         <!-- Signatures (Needed for formal student final exam thesis presentations) -->
         <div class="row mt-5 pt-4">
             <div class="col-8"></div>
@@ -144,7 +190,7 @@
                 <p>Bandung, {{ \Carbon\Carbon::now()->isoFormat('D MMMM Y') }}</p>
                 <p style="margin-bottom: 70px;">Owner Kopi Tempat Kamu Pulang,</p>
                 <p class="fw-bold text-decoration-underline">{{ Auth::user()->name }}</p>
-                <small class="text-muted d-block" style="font-size: 0.75rem; font-style: italic;">Sistem CRM & Loyalitas - Kopi TKP</small>
+                <small class="text-muted d-block" style="font-size: 0.75rem; font-style: italic;">Sistem CRM - Kopi TKP</small>
             </div>
         </div>
 

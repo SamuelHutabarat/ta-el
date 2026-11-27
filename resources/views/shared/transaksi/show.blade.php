@@ -110,7 +110,7 @@
                     <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Riwayat Transaksi
                 </a>
             @else
-                <a href="{{ route('barista.transaksi.index') }}" class="text-warning text-decoration-none fw-bold">
+                <a href="{{ route('kasir.transaksi.index') }}" class="text-warning text-decoration-none fw-bold">
                     <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Riwayat Kasir
                 </a>
             @endif
@@ -141,8 +141,12 @@
             <span>{{ $transaksi->created_at->format('d/m/Y H:i:s') }}</span>
         </div>
         <div class="receipt-line">
-            <span>BARISTA:</span>
+            <span>KASIR:</span>
             <span>{{ strtoupper($transaksi->user->name) }}</span>
+        </div>
+        <div class="receipt-line">
+            <span>SUMBER:</span>
+            <span>{{ $transaksi->sumber_transaksi === 'Online' ? 'ONLINE' : 'DATANG LANGSUNG' }}</span>
         </div>
         <div class="receipt-line">
             <span>PELANGGAN:</span>

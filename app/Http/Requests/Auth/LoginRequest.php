@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Auth;
 
+use App\Support\Telepon;
 use Illuminate\Auth\Events\Lockout;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
@@ -22,13 +23,14 @@ class LoginRequest extends FormRequest
 
     /**
      * Get the validation rules that apply to the request.
+     * Field "email" menerima alamat email (staf) atau nomor telepon (member).
      *
      * @return array<string, ValidationRule|array<mixed>|string>
      */
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            'email' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ];
     }
@@ -42,7 +44,12 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        $identitas = trim($this->string('email')->toString());
+        $kredensial = str_contains($identitas, '@')
+            ? ['email' => Str::lower($identitas)]
+            : ['no_telp' => Telepon::normalisasi($identitas) ?? ''];
+
+        if (! Auth::attempt($kredensial + ['password' => $this->string('password')->toString()], $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -81,6 +88,6 @@ class LoginRequest extends FormRequest
      */
     public function throttleKey(): string
     {
-        return Str::transliterate(Str::lower($this->string('email')).'|'.$this->ip());
+        return Str::transliterate(Str::lower($this->string('email')->toString()).'|'.$this->ip());
     }
 }

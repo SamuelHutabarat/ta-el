@@ -82,7 +82,7 @@
 
                     <!-- Points Needed for Swapping -->
                     <div class="col-12 col-md-6">
-                        <label for="poin_dibutuhkan" class="form-label form-label-coffee">Poin Loyalitas yang Dibutuhkan</label>
+                        <label for="poin_dibutuhkan" class="form-label form-label-coffee">Poin Reward yang Dibutuhkan</label>
                         <div class="input-group">
                             <span class="input-group-text bg-dark border-warning text-info fw-bold"><i class="fa-solid fa-coins"></i></span>
                             <input type="number" class="form-control form-control-coffee @error('poin_dibutuhkan') is-invalid @enderror" id="poin_dibutuhkan" name="poin_dibutuhkan" value="{{ old('poin_dibutuhkan', 0) }}" placeholder="50">

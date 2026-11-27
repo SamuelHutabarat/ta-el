@@ -133,7 +133,7 @@
             <span>{{ $transaksi->created_at->format('d/m/Y H:i:s') }}</span>
         </div>
         <div class="receipt-line">
-            <span>BARISTA:</span>
+            <span>KASIR:</span>
             <span>{{ strtoupper($transaksi->user->name) }}</span>
         </div>
         <div class="receipt-line">

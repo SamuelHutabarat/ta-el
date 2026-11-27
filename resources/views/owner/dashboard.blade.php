@@ -7,7 +7,7 @@
     <div class="row mb-4">
         <div class="col-12">
             <h2 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Ringkasan CRM & Analytics</h2>
-            <p class="text-muted-coffee">Selamat datang kembali, Owner! Pantau performa bisnis dan loyalitas pelanggan di bawah ini.</p>
+            <p class="text-muted-coffee">Selamat datang kembali, Owner! Pantau omset, transaksi, dan perkembangan member CRM di bawah ini.</p>
         </div>
     </div>
 
@@ -114,7 +114,36 @@
         </div>
     </div>
 
-    <!-- Tables Row -->
+    <!-- Hari Penting Pelanggan Setia -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card-coffee">
+            <div class="card-coffee-header d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="m-0 fw-bold"><i class="fa-solid fa-cake-candles me-2 text-warning"></i>Hari Penting Pelanggan Setia (30 hari ke depan)</h5>
+                <small class="text-muted-coffee">Member Gold &amp; Silver: ulang tahun dan ulang tahun keanggotaan</small>
+            </div>
+            <div class="card-coffee-body">
+                @forelse($hariPenting as $hp)
+                    <div class="d-flex flex-wrap justify-content-between align-items-center py-2 border-bottom" style="border-color: rgba(200, 150, 62, 0.12) !important;">
+                        <div>
+                            <span class="fw-bold text-light">{{ $hp['pelanggan']->nama }}</span>
+                            <span class="badge {{ $hp['pelanggan']->status_member === 'Gold' ? 'badge-member badge-gold' : 'badge-member badge-silver' }} ms-2">{{ $hp['pelanggan']->status_member }}</span>
+                            <div class="small text-muted-coffee"><i class="fa-solid fa-gift me-1 text-warning"></i>{{ $hp['jenis'] }}</div>
+                        </div>
+                        <div class="text-end">
+                            <div class="fw-bold text-warning">{{ $hp['tanggal']->locale('id')->isoFormat('D MMM Y') }}</div>
+                            <small class="text-muted-coffee">{{ $hp['sisa_hari'] === 0 ? 'Hari ini' : $hp['sisa_hari'].' hari lagi' }} · {{ $hp['pelanggan']->no_telp }}</small>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center text-muted-coffee py-3">Tidak ada hari penting pelanggan setia dalam 30 hari ke depan.</div>
+                @endforelse
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tables Row -->
     <div class="row g-4">
         <!-- Recent Orders -->
         <div class="col-12 col-xl-7">

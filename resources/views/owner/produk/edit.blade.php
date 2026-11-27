@@ -3,11 +3,11 @@
 @section('title', 'Edit Menu - CRM Owner')
 
 @section('content')
-@php($isCashier = auth()->user()->role === 'barista')
+@php($isCashier = auth()->user()->role === 'kasir')
 <div class="container-fluid p-0" style="max-width: 800px; margin: 0 auto;">
     <div class="row mb-4">
         <div class="col-12">
-            <a href="{{ $isCashier ? route('barista.produk') : route('owner.produk.index') }}" class="text-warning text-decoration-none fw-bold">
+            <a href="{{ $isCashier ? route('kasir.produk') : route('owner.produk.index') }}" class="text-warning text-decoration-none fw-bold">
                 <i class="fa-solid fa-arrow-left me-2"></i> Kembali ke Inventori
             </a>
             <h2 class="fw-bold mt-2 mb-1" style="font-family: 'Playfair Display', serif;">Edit Menu Kopi</h2>
@@ -20,7 +20,7 @@
             <h5 class="m-0 fw-bold"><i class="fa-regular fa-pen-to-square me-2 text-warning"></i>Formulir Data Produk</h5>
         </div>
         <div class="card-coffee-body">
-            <form action="{{ $isCashier ? route('barista.produk.update', $produk->id) : route('owner.produk.update', $produk->id) }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ $isCashier ? route('kasir.produk.update', $produk->id) : route('owner.produk.update', $produk->id) }}" method="POST" enctype="multipart/form-data">
                 @csrf
                 @method('PUT')
                 
@@ -97,7 +97,7 @@
 
                     <!-- Action buttons -->
                     <div class="col-12 mt-4 text-end">
-                        <a href="{{ $isCashier ? route('barista.produk') : route('owner.produk.index') }}" class="btn btn-outline-gold me-2 px-4">Batal</a>
+                        <a href="{{ $isCashier ? route('kasir.produk') : route('owner.produk.index') }}" class="btn btn-outline-gold me-2 px-4">Batal</a>
                         <button type="submit" class="btn btn-gold px-4">Perbarui Menu</button>
                     </div>
                 </div>

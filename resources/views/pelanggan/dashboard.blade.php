@@ -113,14 +113,18 @@
 <div class="container-fluid p-0">
     <div class="row mb-4">
         <div class="col-12">
-            <h2 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Portal Loyalty Member</h2>
+            <h2 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Portal Member CRM</h2>
             <p class="text-muted-coffee">Selamat datang kembali, {{ $pelanggan->nama }}! Kumpulkan poin belanja dan klaim kopi gratis pilihanmu.</p>
         </div>
     </div>
 
     <div class="row">
-        <!-- Left Panel: Loyalty Card & Poin -->
+        <!-- Left Panel: Kartu Member & Poin -->
         <div class="col-12 col-lg-8">
+            <div class="d-flex justify-content-end mb-3 no-print">
+                <a href="{{ route('pelanggan.kartu') }}" class="btn btn-outline-gold"><i class="fa-solid fa-id-card me-1"></i> Lihat &amp; Cetak Kartu Member</a>
+            </div>
+
             <!-- Digital Member Card -->
             <div class="loyalty-card @if($pelanggan->status_member === 'Gold') loyalty-card-gold @elseif($pelanggan->status_member === 'Silver') loyalty-card-silver @else loyalty-card-bronze @endif">
                 <div class="d-flex justify-content-between align-items-start">
@@ -140,7 +144,7 @@
                     </div>
                     <div class="col-4 text-end">
                         <div class="card-meta">Bergabung Sejak</div>
-                        <div class="fw-bold" style="font-size: 0.9rem;">{{ $loyalty->tanggal_bergabung->format('M Y') }}</div>
+                        <div class="fw-bold" style="font-size: 0.9rem;">{{ $pelanggan->tanggal_bergabung?->format('M Y') ?? '-' }}</div>
                     </div>
                 </div>
 
@@ -155,12 +159,12 @@
                     <div class="card-coffee h-100">
                         <div class="card-coffee-body text-center py-4">
                             <span class="text-muted-coffee d-block mb-1 text-uppercase" style="font-size: 0.75rem; letter-spacing: 1px;">Akumulasi Belanja</span>
-                            <h3 class="fw-bold text-warning m-0">Rp {{ number_format($totalSpent, 0, ',', '.') }}</h3>
+                            <h3 class="fw-bold text-warning m-0">Rp {{ number_format((float) $pelanggan->total_belanja, 0, ',', '.') }}</h3>
                             <small class="text-muted-coffee mt-2 d-block" style="font-size: 0.8rem;">
                                 @if($pelanggan->status_member === 'Bronze')
-                                    Belanja Rp {{ number_format(max(0, 500000 - $totalSpent), 0, ',', '.') }} lagi untuk naik level Silver!
+                                    Belanja Rp {{ number_format(max(0, \App\Models\Pelanggan::AMBANG_TIER['Silver'] - (float) $pelanggan->total_belanja), 0, ',', '.') }} lagi untuk naik level Silver!
                                 @elseif($pelanggan->status_member === 'Silver')
-                                    Belanja Rp {{ number_format(max(0, 1000000 - $totalSpent), 0, ',', '.') }} lagi untuk naik level Gold!
+                                    Belanja Rp {{ number_format(max(0, \App\Models\Pelanggan::AMBANG_TIER['Gold'] - (float) $pelanggan->total_belanja), 0, ',', '.') }} lagi untuk naik level Gold!
                                 @else
                                     <span class="text-success"><i class="fa-solid fa-crown"></i> Anda telah mencapai level member tertinggi!</span>
                                 @endif
@@ -193,7 +197,7 @@
                     </span>
                 </div>
                 
-                <span class="text-light fw-bold" style="font-size: 0.95rem;">Tingkat Diskon Anda: {{ $loyalty->diskon_khusus }}% OFF</span>
+                <span class="text-light fw-bold" style="font-size: 0.95rem;">Tingkat Diskon Anda: {{ $pelanggan->diskonPersen() }}% OFF</span>
                 <p class="text-muted-coffee mt-2 mb-4" style="font-size: 0.85rem;">Gunakan poin Anda untuk menukarkan kupon diskon makanan dan kopi gratis!</p>
                 
                 <a href="{{ route('pelanggan.promosi') }}" class="btn btn-gold w-100">
@@ -237,7 +241,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted-coffee py-4">Anda belum melakukan pembelian member. Silakan sebutkan nama member Anda ke barista saat berkunjung!</td>
+                                        <td colspan="5" class="text-center text-muted-coffee py-4">Anda belum melakukan pembelian member. Silakan sebutkan nama member Anda ke kasir saat berkunjung!</td>
                                     </tr>
                                 @endforelse
                             </tbody>

@@ -2,26 +2,32 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use App\Models\DetailTransaksi;
 use App\Models\Pelanggan;
 use App\Models\Produk;
 use App\Models\Promosi;
 use App\Models\Transaksi;
-use App\Models\DetailTransaksi;
-use App\Models\LoyalitasPelanggan;
-use Illuminate\Http\Request;
+use App\Support\Periode;
 use Carbon\Carbon;
-use DB;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class TransaksiController extends Controller
 {
     /**
-     * Owner view: List all transactions.
+     * Owner view: List all transactions per harian, mingguan, atau bulanan.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $transaksi = Transaksi::with(['pelanggan', 'user'])->orderBy('id', 'desc')->get();
-        return view('owner.transaksi.index', compact('transaksi'));
+        $periode = Periode::dariRequest($request, 'bulanan');
+
+        $transaksi = Transaksi::with(['pelanggan', 'user'])
+            ->dalamPeriode($periode['mulai'], $periode['selesai'])
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return view('owner.transaksi.index', compact('transaksi', 'periode'));
     }
 
     /**
@@ -29,54 +35,54 @@ class TransaksiController extends Controller
      */
     public function show($id)
     {
-        $transaksi = Transaksi::with(['detail_transaksi.produk', 'pelanggan.loyalitas_pelanggan', 'user'])
+        $transaksi = Transaksi::with(['detail_transaksi.produk', 'pelanggan', 'user'])
             ->findOrFail($id);
 
         return view('shared.transaksi.show', compact('transaksi'));
     }
 
     /**
-     * Barista Dashboard: Stats and recent orders.
+     * Kasir Dashboard: Stats and recent orders.
      */
-    public function baristaDashboard()
+    public function kasirDashboard()
     {
         $today = Carbon::today();
-        
+
         $todayRevenue = Transaksi::whereDate('created_at', $today)
             ->where('status_pembayaran', 'Lunas')
             ->sum('total_akhir');
-            
+
         $todayTransactions = Transaksi::whereDate('created_at', $today)->count();
         $totalProductsCount = Produk::count();
-        
+
         $recentTransactions = Transaksi::with(['pelanggan'])
             ->where('user_id', auth()->id())
             ->orderBy('created_at', 'desc')
             ->limit(5)
             ->get();
 
-        return view('barista.dashboard', compact('todayRevenue', 'todayTransactions', 'totalProductsCount', 'recentTransactions'));
+        return view('kasir.dashboard', compact('todayRevenue', 'todayTransactions', 'totalProductsCount', 'recentTransactions'));
     }
 
     /**
-     * Barista view: Menu cards with stock.
+     * Kasir view: Menu cards with stock.
      */
-    public function baristaProduk()
+    public function kasirProduk()
     {
         $produk = Produk::orderBy('kategori')->get();
-        return view('barista.produk', compact('produk'));
+        return view('kasir.produk', compact('produk'));
     }
 
     /**
-     * Barista history.
+     * Kasir history.
      */
-    public function baristaHistory()
+    public function kasirHistory()
     {
         $transaksi = Transaksi::with(['pelanggan'])
             ->where('user_id', auth()->id())
             ->orderBy('id', 'desc')
             ->get();
-        return view('barista.history', compact('transaksi'));
+        return view('kasir.history', compact('transaksi'));
     }
 
     /**
@@ -85,13 +91,13 @@ class TransaksiController extends Controller
     public function create()
     {
         $produk = Produk::where('stok', '>', 0)->orderBy('kategori')->get();
-        $pelanggan = Pelanggan::orderBy('nama')->get();
+        $pelanggan = Pelanggan::member()->orderBy('nama')->get();
         $promosi = Promosi::where('status', true)
             ->where('tanggal_mulai', '<=', Carbon::today())
             ->where('tanggal_selesai', '>=', Carbon::today())
             ->get();
 
-        return view('barista.transaksi.create', compact('produk', 'pelanggan', 'promosi'));
+        return view('kasir.transaksi.create', compact('produk', 'pelanggan', 'promosi'));
     }
 
     /**
@@ -107,6 +113,7 @@ class TransaksiController extends Controller
             'kode_promo' => 'nullable|string',
             'poin_digunakan' => 'nullable|integer|min:0',
             'metode_pembayaran' => 'required|string|in:Cash,QRIS',
+            'sumber_transaksi' => ['nullable', Rule::in(Transaksi::SUMBER)],
             'total_bayar' => 'required|numeric|min:0',
         ]);
 
@@ -115,9 +122,9 @@ class TransaksiController extends Controller
             $cart = $request->cart;
             $pelangganId = $request->pelanggan_id;
             $kodePromo = $request->kode_promo;
-            $usePoints = $request->poin_digunakan > 0;
             $paymentMethod = $request->metode_pembayaran;
             $totalBayar = $request->total_bayar;
+            $sumber = $request->input('sumber_transaksi') ?: 'Offline';
 
             $totalHarga = 0;
             $detailItems = [];
@@ -144,27 +151,19 @@ class TransaksiController extends Controller
 
             // 2. Initialize discounts
             $diskon = 0;
-            $memberDiscountPersen = 0;
             $pelanggan = null;
 
-            // Apply Member Level Discount (from CRM Loyalitas)
+            // Apply Member Level Discount (only real members, never kasir/owner accounts)
             if ($pelangganId) {
-                $pelanggan = Pelanggan::findOrFail($pelangganId);
-                
-                // Get customer membership tier discount percentage
-                if ($pelanggan->status_member === 'Gold') {
-                    $memberDiscountPersen = 10; // 10% discount
-                } elseif ($pelanggan->status_member === 'Silver') {
-                    $memberDiscountPersen = 5; // 5% discount
-                }
+                $pelanggan = Pelanggan::member()->findOrFail($pelangganId);
 
+                $memberDiscountPersen = $pelanggan->diskonPersen();
                 if ($memberDiscountPersen > 0) {
                     $diskon += ($totalHarga * ($memberDiscountPersen / 100));
                 }
             }
 
             // Apply Promo Code Discount
-            $promo = null;
             if ($kodePromo) {
                 $promo = Promosi::where('kode_promo', $kodePromo)
                     ->where('status', true)
@@ -211,8 +210,8 @@ class TransaksiController extends Controller
 
             $kembalian = $totalBayar - $totalAkhir;
 
-            // Calculate new points earned (1 point per 10k spent)
-            $poinDapat = floor($totalAkhir / 10000);
+            // Poin reward: setiap kelipatan nilai belanja sesuai kanal (datang langsung / online)
+            $poinDapat = (int) floor($totalAkhir / config('crm.rupiah_per_poin.'.$sumber, 10000));
 
             // Generate unique sequential order number
             $todayStr = Carbon::now()->format('Ymd');
@@ -234,6 +233,7 @@ class TransaksiController extends Controller
                 'total_bayar' => $totalBayar,
                 'kembalian' => $kembalian,
                 'metode_pembayaran' => $paymentMethod,
+                'sumber_transaksi' => $sumber,
                 'status_pembayaran' => 'Lunas',
                 'poin_dapat' => $poinDapat,
                 'poin_digunakan' => $pointsRedeemed,
@@ -255,44 +255,18 @@ class TransaksiController extends Controller
                 $prod->save();
             }
 
-            // 5. CRM Updates: Points & Loyalty Tiering
+            // 5. CRM Updates: poin, total belanja, dan level member
             if ($pelanggan) {
-                // Update customer points
                 $pelanggan->poin = max(0, $pelanggan->poin - $pointsRedeemed + $poinDapat);
+                $pelanggan->total_belanja = (float) $pelanggan->total_belanja + $totalAkhir;
+                $pelanggan->status_member = Pelanggan::tierUntuk((float) $pelanggan->total_belanja);
                 $pelanggan->save();
-
-                // Update accumulated spending
-                $loyalty = LoyalitasPelanggan::where('pelanggan_id', $pelanggan->id)->first();
-                if ($loyalty) {
-                    $loyalty->total_akumulasi_transaksi += $totalAkhir;
-                    
-                    // Determine new member status tier
-                    $oldTier = $loyalty->level_member;
-                    $newTier = 'Bronze';
-                    $newDiscount = 0;
-
-                    if ($loyalty->total_akumulasi_transaksi >= 1000000.00) {
-                        $newTier = 'Gold';
-                        $newDiscount = 10;
-                    } elseif ($loyalty->total_akumulasi_transaksi >= 500000.00) {
-                        $newTier = 'Silver';
-                        $newDiscount = 5;
-                    }
-
-                    $loyalty->level_member = $newTier;
-                    $loyalty->diskon_khusus = $newDiscount;
-                    $loyalty->save();
-
-                    // Keep pelanggan main status synced
-                    $pelanggan->status_member = $newTier;
-                    $pelanggan->save();
-                }
             }
 
             return response()->json([
                 'success' => true,
                 'message' => 'Transaksi berhasil!',
-                'redirect_url' => route('barista.transaksi.show', $transaksi->id)
+                'redirect_url' => route('kasir.transaksi.show', $transaksi->id)
             ]);
         });
     }

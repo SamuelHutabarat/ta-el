@@ -445,6 +445,14 @@
             }
         }
     </style>
+    <style>
+        @media print {
+            #sidebar-wrapper, .top-navbar, .footer, .no-print { display: none !important; }
+            #page-content-wrapper { margin-left: 0 !important; width: 100% !important; }
+            .main-content { padding: 0 !important; }
+            body { background: #fff !important; }
+        }
+    </style>
     @yield('styles')
 </head>
 <body class="">
@@ -466,7 +474,7 @@
                 <div class="text-warning text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">
                     @if(Auth::user()->role === 'owner')
                         <i class="fa-solid fa-crown me-1"></i> Owner
-                    @elseif(Auth::user()->role === 'barista')
+                    @elseif(Auth::user()->role === 'kasir')
                         <i class="fa-solid fa-cash-register me-1"></i> Kasir
                     @else
                         <i class="fa-solid fa-user me-1"></i> Pelanggan
@@ -515,31 +523,41 @@
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
-                    <a href="{{ route('owner.loyalitas.index') }}" class="sidebar-nav-link {{ Route::is('owner.loyalitas.*') ? 'active' : '' }}">
-                        <i class="fa-solid fa-award"></i> Loyalitas Pelanggan
+                    <a href="{{ route('owner.belanja-bahan.index') }}" class="sidebar-nav-link {{ Route::is('owner.belanja-bahan.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-basket-shopping"></i> Modal Belanja Bahan
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ route('owner.tutup-buku.index') }}" class="sidebar-nav-link {{ Route::is('owner.tutup-buku.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-book"></i> Buka / Tutup Buku
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ route('owner.kritik-saran.index') }}" class="sidebar-nav-link {{ Route::is('owner.kritik-saran.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-comment-dots"></i> Kritik &amp; Saran
                     </a>
                 </li>
             @endif
 
-            @if(Auth::user()->role === 'barista')
-                <!-- BARISTA MENUS -->
+            @if(Auth::user()->role === 'kasir')
+                <!-- KASIR MENUS -->
                 <li class="sidebar-nav-item">
-                    <a href="{{ route('barista.dashboard') }}" class="sidebar-nav-link {{ Route::is('barista.dashboard') ? 'active' : '' }}">
+                    <a href="{{ route('kasir.dashboard') }}" class="sidebar-nav-link {{ Route::is('kasir.dashboard') ? 'active' : '' }}">
                         <i class="fa-solid fa-house-laptop"></i> Dashboard
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
-                    <a href="{{ route('barista.transaksi.create') }}" class="sidebar-nav-link {{ Route::is('barista.transaksi.create') ? 'active' : '' }}">
+                    <a href="{{ route('kasir.transaksi.create') }}" class="sidebar-nav-link {{ Route::is('kasir.transaksi.create') ? 'active' : '' }}">
                         <i class="fa-solid fa-cash-register"></i> POS Kasir (Checkout)
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
-                    <a href="{{ route('barista.produk') }}" class="sidebar-nav-link {{ Route::is('barista.produk') ? 'active' : '' }}">
+                    <a href="{{ route('kasir.produk') }}" class="sidebar-nav-link {{ Route::is('kasir.produk') ? 'active' : '' }}">
                         <i class="fa-solid fa-mug-hot"></i> Daftar Menu
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
-                    <a href="{{ route('barista.transaksi.index') }}" class="sidebar-nav-link {{ Route::is('barista.transaksi.index') ? 'active' : '' }}">
+                    <a href="{{ route('kasir.transaksi.index') }}" class="sidebar-nav-link {{ Route::is('kasir.transaksi.index') ? 'active' : '' }}">
                         <i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi
                     </a>
                 </li>
@@ -550,6 +568,11 @@
                 <li class="sidebar-nav-item">
                     <a href="{{ route('pelanggan.dashboard') }}" class="sidebar-nav-link {{ Route::is('pelanggan.dashboard') ? 'active' : '' }}">
                         <i class="fa-solid fa-circle-user"></i> Dashboard Member
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ route('pelanggan.kartu') }}" class="sidebar-nav-link {{ Route::is('pelanggan.kartu') ? 'active' : '' }}">
+                        <i class="fa-solid fa-id-card"></i> Kartu Member
                     </a>
                 </li>
                 <li class="sidebar-nav-item">
@@ -565,6 +588,11 @@
                 <li class="sidebar-nav-item">
                     <a href="{{ route('pelanggan.transaksi.index') }}" class="sidebar-nav-link {{ Route::is('pelanggan.transaksi.index') ? 'active' : '' }}">
                         <i class="fa-solid fa-receipt"></i> Riwayat Transaksi
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="{{ route('pelanggan.kritik-saran.index') }}" class="sidebar-nav-link {{ Route::is('pelanggan.kritik-saran.*') ? 'active' : '' }}">
+                        <i class="fa-solid fa-comment-dots"></i> Kritik &amp; Saran
                     </a>
                 </li>
             @endif
@@ -592,7 +620,7 @@
                 </button>
                 
                 <h5 class="m-0 ms-3 fw-bold text-uppercase d-none d-sm-block" style="color: var(--accent-gold); letter-spacing: 1px;">
-                    Portal CRM & Loyalitas - Kopi TKP
+                    Portal CRM - Kopi TKP
                 </h5>
                 
                 <div class="ms-auto d-flex align-items-center">

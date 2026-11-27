@@ -10,7 +10,7 @@
             <p class="text-muted-coffee mb-0">Katalog menu untuk kasir. Tambah atau perbarui foto, harga, deskripsi, dan stok menu.</p>
         </div>
         <div class="col-12 col-md-4 text-md-end mt-3 mt-md-0">
-            <a href="{{ route('barista.produk.create') }}" class="btn btn-gold">
+            <a href="{{ route('kasir.produk.create') }}" class="btn btn-gold">
                 <i class="fa-solid fa-plus me-2"></i> Tambah Menu
             </a>
         </div>
@@ -64,7 +64,7 @@
                                     </span>
                                 @endif
                             </div>
-                            <a href="{{ route('barista.produk.edit', $p->id) }}" class="btn btn-sm btn-outline-gold w-100 mt-3">
+                            <a href="{{ route('kasir.produk.edit', $p->id) }}" class="btn btn-sm btn-outline-gold w-100 mt-3">
                                 <i class="fa-regular fa-pen-to-square me-1"></i> Edit Menu / Foto
                             </a>
                         </div>

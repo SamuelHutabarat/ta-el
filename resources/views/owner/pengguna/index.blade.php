@@ -7,7 +7,7 @@
     <div class="row mb-4 align-items-center">
         <div class="col-12 col-md-6">
             <h2 class="fw-bold mb-1" style="font-family: 'Playfair Display', serif;">Kelola Pengguna Sistem</h2>
-            <p class="text-muted-coffee">Kelola kredensial login akun Owner, Barista, dan Pelanggan.</p>
+            <p class="text-muted-coffee">Kelola akun login Owner, Kasir, dan Pelanggan.</p>
         </div>
         <div class="col-12 col-md-6 text-md-end mt-3 mt-md-0">
             <a href="{{ route('owner.pengguna.create') }}" class="btn btn-gold">
@@ -27,7 +27,7 @@
                         <tr>
                             <th>ID</th>
                             <th>Nama Pengguna</th>
-                            <th>Alamat Email</th>
+                            <th>Email / No. Telepon</th>
                             <th>Hak Akses / Role</th>
                             <th>Tanggal Registrasi</th>
                             <th class="text-center" style="width: 120px;">Aksi</th>
@@ -38,11 +38,11 @@
                             <tr>
                                 <td>{{ $user->id }}</td>
                                 <td class="fw-bold text-light">{{ $user->name }}</td>
-                                <td>{{ $user->email }}</td>
+                                <td>{{ $user->email ?? ($user->no_telp ?? '-') }}</td>
                                 <td>
                                     @if($user->role === 'owner')
                                         <span class="badge bg-warning text-dark fw-bold px-2.5 py-1.5"><i class="fa-solid fa-crown me-1"></i> Owner</span>
-                                    @elseif($user->role === 'barista')
+                                    @elseif($user->role === 'kasir')
                                         <span class="badge bg-info text-dark fw-bold px-2.5 py-1.5"><i class="fa-solid fa-cash-register me-1"></i> Kasir</span>
                                     @else
                                         <span class="badge bg-secondary text-light fw-bold px-2.5 py-1.5"><i class="fa-solid fa-user me-1"></i> Pelanggan</span>

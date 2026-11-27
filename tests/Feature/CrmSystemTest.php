@@ -2,12 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Pelanggan;
 use App\Models\Produk;
-use App\Models\Promosi;
-use App\Models\Transaksi;
-use App\Models\LoyalitasPelanggan;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\File;
 use Tests\TestCase;
@@ -42,11 +39,11 @@ class CrmSystemTest extends TestCase
         $response->assertSee('Distribusi Level Member');
     }
 
-    public function test_barista_can_access_pos_screen(): void
+    public function test_kasir_can_access_pos_screen(): void
     {
-        $barista = User::where('role', 'barista')->first();
+        $kasir = User::where('role', 'kasir')->first();
 
-        $response = $this->actingAs($barista)->get('/barista/transaksi/baru');
+        $response = $this->actingAs($kasir)->get('/kasir/transaksi/baru');
         $response->assertStatus(200);
         $response->assertSee('Keranjang Belanja');
         $response->assertSee('Pilih Member CRM');
@@ -54,7 +51,7 @@ class CrmSystemTest extends TestCase
 
     public function test_pos_checkout_creates_transaction_and_deducts_stock(): void
     {
-        $barista = User::where('role', 'barista')->first();
+        $kasir = User::where('role', 'kasir')->first();
         $produk = Produk::where('stok', '>=', 5)->first();
         $initialStock = $produk->stok;
 
@@ -72,8 +69,8 @@ class CrmSystemTest extends TestCase
             'total_bayar' => $produk->harga * 2,
         ];
 
-        $response = $this->actingAs($barista)
-            ->postJson('/barista/transaksi/checkout', $payload);
+        $response = $this->actingAs($kasir)
+            ->postJson('/kasir/transaksi/checkout', $payload);
 
         $response->assertStatus(200);
         $response->assertJson(['success' => true]);
@@ -87,7 +84,7 @@ class CrmSystemTest extends TestCase
         $memberUser = User::where('role', 'pelanggan')->first();
         $response = $this->actingAs($memberUser)->get('/pelanggan/dashboard');
         $response->assertStatus(200);
-        $response->assertSee('Portal Loyalty Member');
+        $response->assertSee('Portal Member CRM');
         $response->assertSee('Saldo Poin Anda');
     }
 
@@ -114,31 +111,31 @@ class CrmSystemTest extends TestCase
         $this->assertDatabaseHas('produk', ['id' => $produkWithSales->id]);
     }
 
-    public function test_barista_can_open_product_create_and_edit_screens(): void
+    public function test_kasir_can_open_product_create_and_edit_screens(): void
     {
-        $barista = User::where('role', 'barista')->first();
+        $kasir = User::where('role', 'kasir')->first();
         $produk = Produk::firstOrFail();
 
-        $this->actingAs($barista)
-            ->get('/barista/produk/create')
+        $this->actingAs($kasir)
+            ->get('/kasir/produk/create')
             ->assertOk()
             ->assertSee('Foto Produk');
 
-        $this->get('/barista/produk/' . $produk->id . '/edit')
+        $this->get('/kasir/produk/' . $produk->id . '/edit')
             ->assertOk()
             ->assertSee('Ganti Foto Produk');
     }
 
-    public function test_barista_can_add_a_menu_with_its_photo(): void
+    public function test_kasir_can_add_a_menu_with_its_photo(): void
     {
-        $barista = User::where('role', 'barista')->first();
+        $kasir = User::where('role', 'kasir')->first();
         $imagePath = null;
         $temporaryImage = storage_path('framework/testing/menu-photo-test.jpg');
         File::ensureDirectoryExists(dirname($temporaryImage));
         copy(public_path('uploads/produk/1794564783_cafe_latte.jpg'), $temporaryImage);
 
         try {
-            $response = $this->actingAs($barista)->post('/barista/produk', [
+            $response = $this->actingAs($kasir)->post('/kasir/produk', [
                 'nama_produk' => 'Menu Foto Kasir Test',
                 'kategori' => 'Kopi',
                 'harga' => 19000,
@@ -153,7 +150,7 @@ class CrmSystemTest extends TestCase
                 ),
             ]);
 
-            $response->assertRedirect('/barista/produk');
+            $response->assertRedirect('/kasir/produk');
             $produk = Produk::where('nama_produk', 'Menu Foto Kasir Test')->firstOrFail();
             $imagePath = public_path($produk->gambar);
             $this->assertFileExists($imagePath);
@@ -167,24 +164,40 @@ class CrmSystemTest extends TestCase
         }
     }
 
-    public function test_menu_photo_mapping_and_cashier_roles_are_corrected_by_data_migration(): void
+    public function test_menu_photo_mapping_and_kasir_roles_are_corrected_by_data_migrations(): void
     {
+        // Kondisi database lama: menu Americano memakai foto salah dan staf masih role pelanggan dengan profil member.
         $produk = Produk::where('nama_produk', 'Americano')->firstOrFail();
         $produk->update(['gambar' => 'uploads/produk/espresso_latte.png']);
 
-        foreach ([['Owit', 'owit@tkp.com'], ['Tantri', 'tantri@tkp.com']] as [$name, $email]) {
-            User::create([
-                'name' => $name,
-                'email' => $email,
-                'password' => bcrypt('password'),
-                'role' => 'pelanggan',
+        foreach (['owit@tkp.com', 'tantri@tkp.com'] as $email) {
+            $staf = User::where('email', $email)->firstOrFail();
+            $staf->update(['role' => 'pelanggan']);
+            Pelanggan::create([
+                'user_id' => $staf->id,
+                'kode_pelanggan' => Pelanggan::kodeBerikutnya(),
+                'nama' => $staf->name,
+                'no_telp' => '08111'.random_int(100000, 999999),
+                'poin' => 0,
+                'status_member' => 'Bronze',
+                'total_belanja' => 0,
             ]);
         }
 
-        $migration = require base_path('database/migrations/2026_11_25_000001_map_menu_images_and_cashier_roles.php');
-        $migration->up();
+        // Migrasi lama: menandai staf sebagai barista (sebelum role diganti menjadi kasir).
+        $migrasiFoto = require base_path('database/migrations/2026_11_25_000001_map_menu_images_and_cashier_roles.php');
+        $migrasiFoto->up();
 
         $this->assertSame('uploads/produk/1794564621_americano.jpg', $produk->fresh()->gambar);
         $this->assertSame(2, User::whereIn('email', ['owit@tkp.com', 'tantri@tkp.com'])->where('role', 'barista')->count());
+
+        // Migrasi baru: barista menjadi kasir dan profil member staf dihapus.
+        $migrasiRole = require base_path('database/migrations/2026_11_27_000002_convert_barista_role_to_kasir.php');
+        $migrasiRole->up();
+
+        $stafIds = User::whereIn('email', ['owit@tkp.com', 'tantri@tkp.com'])->pluck('id');
+        $this->assertSame(2, User::whereIn('email', ['owit@tkp.com', 'tantri@tkp.com'])->where('role', 'kasir')->count());
+        $this->assertSame(0, Pelanggan::whereIn('user_id', $stafIds)->count());
+        $this->assertSame(0, User::where('role', 'barista')->count());
     }
 }

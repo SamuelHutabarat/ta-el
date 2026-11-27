@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
 use App\Models\Pelanggan;
-use App\Models\Transaksi;
 use App\Models\Promosi;
-use App\Models\LoyalitasPelanggan;
+use App\Models\Transaksi;
+use App\Models\User;
+use App\Support\Telepon;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
+use Illuminate\Validation\Rule;
 
 class PelangganController extends Controller
 {
@@ -22,12 +23,12 @@ class PelangganController extends Controller
      */
     public function index()
     {
-        $pelanggan = Pelanggan::with(['user', 'loyalitas_pelanggan'])->orderBy('id', 'desc')->get();
+        $pelanggan = Pelanggan::member()->with('user')->orderBy('id', 'desc')->get();
         return view('owner.pelanggan.index', compact('pelanggan'));
     }
 
     /**
-     * Show form to create new customer profile (and optional user account).
+     * Show form to create new customer profile (and optional login account).
      */
     public function create()
     {
@@ -35,66 +36,47 @@ class PelangganController extends Controller
     }
 
     /**
-     * Store a new customer and create associated credentials.
+     * Store a new customer. Member cukup nama + nomor telepon; kata sandi opsional untuk akun login.
      */
     public function store(Request $request)
     {
-        $request->validate([
+        $request->merge(['no_telp' => Telepon::normalisasi($request->input('no_telp'))]);
+
+        $data = $request->validate([
             'nama' => 'required|string|max:255',
-            'no_telp' => 'nullable|string|max:20',
-            'alamat' => 'nullable|string',
+            'no_telp' => ['required', 'string', 'max:20', 'unique:pelanggan,no_telp', 'unique:users,no_telp'],
+            'tanggal_lahir' => 'nullable|date|before:today',
             'poin' => 'required|integer|min:0',
-            'status_member' => 'required|string|in:Bronze,Silver,Gold',
-            // optional account credentials
-            'email' => 'nullable|email|unique:users,email',
+            'status_member' => ['required', 'string', Rule::in(['Bronze', 'Silver', 'Gold'])],
+            // optional login account (login dengan nomor telepon)
             'password' => 'nullable|string|min:8|confirmed',
         ]);
 
-        $userId = null;
-
-        // If email and password are provided, create login account
-        if ($request->filled('email') && $request->filled('password')) {
-            $user = User::create([
-                'name' => $request->nama,
-                'email' => $request->email,
-                'password' => Hash::make($request->password),
+        $akun = null;
+        if ($request->filled('password')) {
+            $akun = User::create([
+                'name' => $data['nama'],
+                'email' => null,
+                'no_telp' => $data['no_telp'],
+                'password' => Hash::make($data['password']),
                 'role' => 'pelanggan',
             ]);
-            $userId = $user->id;
         }
-
-        // Generate unique member code
-        $latestPelanggan = Pelanggan::orderBy('id', 'desc')->first();
-        $nextNum = $latestPelanggan ? ((int)substr($latestPelanggan->kode_pelanggan, 4)) + 1 : 1;
-        $kode = 'PLG-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
 
         $pelanggan = Pelanggan::create([
-            'user_id' => $userId,
-            'kode_pelanggan' => $kode,
-            'nama' => $request->nama,
-            'no_telp' => $request->no_telp ?? '-',
-            'alamat' => $request->alamat ?? '-',
-            'poin' => $request->poin,
-            'status_member' => $request->status_member,
-        ]);
-
-        // Create loyalty tracker record
-        $diskonKhusus = 0;
-        $accumulated = 0;
-        if ($request->status_member === 'Gold') {
-            $diskonKhusus = 10;
-            $accumulated = 1000000.00;
-        } elseif ($request->status_member === 'Silver') {
-            $diskonKhusus = 5;
-            $accumulated = 500000.00;
-        }
-
-        LoyalitasPelanggan::create([
-            'pelanggan_id' => $pelanggan->id,
-            'total_akumulasi_transaksi' => $accumulated,
-            'level_member' => $request->status_member,
-            'diskon_khusus' => $diskonKhusus,
-            'tanggal_bergabung' => Carbon::now(),
+            'user_id' => $akun?->id,
+            'kode_pelanggan' => Pelanggan::kodeBerikutnya(),
+            'nama' => $data['nama'],
+            'no_telp' => $data['no_telp'],
+            'poin' => $data['poin'],
+            'status_member' => $data['status_member'],
+            'total_belanja' => match ($data['status_member']) {
+                'Gold' => Pelanggan::AMBANG_TIER['Gold'],
+                'Silver' => Pelanggan::AMBANG_TIER['Silver'],
+                default => 0,
+            },
+            'tanggal_lahir' => $data['tanggal_lahir'] ?? null,
+            'tanggal_bergabung' => Carbon::today()->toDateString(),
         ]);
 
         return redirect()->route('owner.pelanggan.index')->with('success', 'Pelanggan baru berhasil ditambahkan.');
@@ -113,35 +95,30 @@ class PelangganController extends Controller
      */
     public function update(Request $request, Pelanggan $pelanggan)
     {
-        $request->validate([
+        $request->merge(['no_telp' => Telepon::normalisasi($request->input('no_telp'))]);
+
+        $data = $request->validate([
             'nama' => 'required|string|max:255',
-            'no_telp' => 'nullable|string|max:20',
-            'alamat' => 'nullable|string',
+            'no_telp' => ['required', 'string', 'max:20', Rule::unique('pelanggan', 'no_telp')->ignore($pelanggan->id), Rule::unique('users', 'no_telp')->ignore($pelanggan->user_id)],
+            'tanggal_lahir' => 'nullable|date|before:today',
             'poin' => 'required|integer|min:0',
-            'status_member' => 'required|string|in:Bronze,Silver,Gold',
+            'status_member' => ['required', 'string', Rule::in(['Bronze', 'Silver', 'Gold'])],
         ]);
 
-        $pelanggan->update($request->only(['nama', 'no_telp', 'alamat', 'poin', 'status_member']));
+        $pelanggan->update([
+            'nama' => $data['nama'],
+            'no_telp' => $data['no_telp'],
+            'tanggal_lahir' => $data['tanggal_lahir'] ?? null,
+            'poin' => $data['poin'],
+            'status_member' => $data['status_member'],
+        ]);
 
-        // Synchronize member level discount
-        $diskonKhusus = 0;
-        if ($request->status_member === 'Gold') {
-            $diskonKhusus = 10;
-        } elseif ($request->status_member === 'Silver') {
-            $diskonKhusus = 5;
-        }
-
-        $loyalty = LoyalitasPelanggan::where('pelanggan_id', $pelanggan->id)->first();
-        if ($loyalty) {
-            $loyalty->level_member = $request->status_member;
-            $loyalty->diskon_khusus = $diskonKhusus;
-            $loyalty->save();
-        }
-
-        // Sync name to user account if linked
+        // Sync name & phone to the login account if linked
         if ($pelanggan->user) {
-            $pelanggan->user->name = $request->nama;
-            $pelanggan->user->save();
+            $pelanggan->user->update([
+                'name' => $data['nama'],
+                'no_telp' => $data['no_telp'],
+            ]);
         }
 
         return redirect()->route('owner.pelanggan.index')->with('success', 'Data pelanggan berhasil diperbarui.');
@@ -162,6 +139,17 @@ class PelangganController extends Controller
         return redirect()->route('owner.pelanggan.index')->with('success', 'Data pelanggan berhasil dihapus.');
     }
 
+    /**
+     * Kartu member yang bisa dicetak (dilihat owner untuk pelanggan tertentu).
+     */
+    public function kartuOwner(Pelanggan $pelanggan)
+    {
+        return view('kartu.show', [
+            'pelanggan' => $pelanggan,
+            'kembali' => route('owner.pelanggan.index'),
+        ]);
+    }
+
     // ========================================================
     // CUSTOMER PORTAL FUNCTIONS (Role: pelanggan)
     // ========================================================
@@ -171,36 +159,8 @@ class PelangganController extends Controller
      */
     public function dashboard()
     {
-        $user = auth()->user();
-        
-        // Find associated customer record (or create one on the fly if missing)
-        $pelanggan = $user->pelanggan;
-        if (!$pelanggan) {
-            $latestPelanggan = Pelanggan::orderBy('id', 'desc')->first();
-            $nextNum = $latestPelanggan ? ((int)substr($latestPelanggan->kode_pelanggan, 4)) + 1 : 1;
-            $kode = 'PLG-' . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+        $pelanggan = $this->pelangganAkun();
 
-            $pelanggan = Pelanggan::create([
-                'user_id' => $user->id,
-                'kode_pelanggan' => $kode,
-                'nama' => $user->name,
-                'no_telp' => '-',
-                'alamat' => '-',
-                'poin' => 0,
-                'status_member' => 'Bronze',
-            ]);
-
-            LoyalitasPelanggan::create([
-                'pelanggan_id' => $pelanggan->id,
-                'total_akumulasi_transaksi' => 0,
-                'level_member' => 'Bronze',
-                'diskon_khusus' => 0,
-                'tanggal_bergabung' => Carbon::now(),
-            ]);
-        }
-
-        $loyalty = $pelanggan->loyalitas_pelanggan;
-        
         // Get customer statistics
         $recentTransactions = Transaksi::where('pelanggan_id', $pelanggan->id)
             ->orderBy('created_at', 'desc')
@@ -216,7 +176,18 @@ class PelangganController extends Controller
             ->limit(3)
             ->get();
 
-        return view('pelanggan.dashboard', compact('pelanggan', 'loyalty', 'recentTransactions', 'totalTransactionCount', 'totalSpent', 'promosi'));
+        return view('pelanggan.dashboard', compact('pelanggan', 'recentTransactions', 'totalTransactionCount', 'totalSpent', 'promosi'));
+    }
+
+    /**
+     * Kartu member pelanggan yang login (dapat dicetak untuk melihat poin reward).
+     */
+    public function kartu()
+    {
+        return view('kartu.show', [
+            'pelanggan' => $this->pelangganAkun(),
+            'kembali' => route('pelanggan.dashboard'),
+        ]);
     }
 
     /**
@@ -238,7 +209,7 @@ class PelangganController extends Controller
             ->orderBy('poin_dibutuhkan', 'asc')
             ->get();
 
-        $pelanggan = auth()->user()->pelanggan;
+        $pelanggan = $this->pelangganAkun();
 
         return view('pelanggan.promosi', compact('promosi', 'pelanggan'));
     }
@@ -248,7 +219,7 @@ class PelangganController extends Controller
      */
     public function transaksi()
     {
-        $pelanggan = auth()->user()->pelanggan;
+        $pelanggan = $this->pelangganAkun();
         $transaksi = Transaksi::where('pelanggan_id', $pelanggan->id)
             ->orderBy('created_at', 'desc')
             ->get();
@@ -261,8 +232,8 @@ class PelangganController extends Controller
      */
     public function transaksiDetail($id)
     {
-        $pelanggan = auth()->user()->pelanggan;
-        
+        $pelanggan = $this->pelangganAkun();
+
         // Ensure the transaction belongs to the logged-in customer
         $transaksi = Transaksi::with(['detail_transaksi.produk', 'user'])
             ->where('pelanggan_id', $pelanggan->id)
@@ -282,7 +253,7 @@ class PelangganController extends Controller
         ]);
 
         $promo = Promosi::findOrFail($request->promosi_id);
-        $pelanggan = auth()->user()->pelanggan;
+        $pelanggan = $this->pelangganAkun();
 
         if ($pelanggan->poin < $promo->poin_dibutuhkan) {
             return redirect()->back()->with('error', 'Poin Anda tidak mencukupi untuk mengklaim promo ini.');
@@ -292,6 +263,16 @@ class PelangganController extends Controller
         $pelanggan->poin -= $promo->poin_dibutuhkan;
         $pelanggan->save();
 
-        return redirect()->back()->with('success', 'Promo "' . $promo->nama_promo . '" berhasil diklaim! Tunjukkan kode kupon "' . $promo->kode_promo . '" ke Barista saat pemesanan.');
+        return redirect()->back()->with('success', 'Promo "' . $promo->nama_promo . '" berhasil diklaim! Tunjukkan kode kupon "' . $promo->kode_promo . '" ke Kasir saat pemesanan.');
+    }
+
+    /**
+     * Profil member milik akun yang login; dibuat otomatis bila belum ada.
+     */
+    private function pelangganAkun(): Pelanggan
+    {
+        $user = auth()->user();
+
+        return $user->pelanggan ?? Pelanggan::buatUntukAkun($user);
     }
 }
